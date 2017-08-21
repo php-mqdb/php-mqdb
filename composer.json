@@ -1,0 +1,29 @@
+{
+  "name": "php-mqdb/php-mqdb",
+  "description": "PHP Message Queue with database. Provide some interface, trait & client to manage message queue in php.",
+  "type": "library",
+  "license": "MIT",
+
+  "authors": [
+    {
+      "name": "Romain Cottard",
+      "role": "Developer"
+    }
+  ],
+
+  "autoload": {
+    "psr-4": {
+      "PhpMqdb\\": "./src/"
+    }
+  },
+
+  "require": {
+    "doctrine/dbal": "^2.5"
+  },
+
+  "require-dev": {
+    "phpdocumentor/reflection-docblock": "^3.1",
+    "phpunit/phpunit": "^5.0"
+  }
+
+}
