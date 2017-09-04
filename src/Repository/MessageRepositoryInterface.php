@@ -110,7 +110,7 @@ interface MessageRepositoryInterface
      *
      * @param  string $table
      * @return $this
-     * @throws \PhpMQ\Exception\EmptySetValuesException
+     * @throws \PhpMqdb\Exception\EmptySetValuesException
      * @throws \LogicException
      */
     public function setTable($table);
