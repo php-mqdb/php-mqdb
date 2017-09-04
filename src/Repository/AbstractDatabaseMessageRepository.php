@@ -159,6 +159,8 @@ abstract class AbstractDatabaseMessageRepository implements MessageRepositoryInt
                     'date_create',
                     'status',
                 ]) . ' WHERE ' . self::$fields['id'] . ' = :existing_id';
+
+            $this->bind[':existing_id'] = $message->getId();
         }
 
         try {

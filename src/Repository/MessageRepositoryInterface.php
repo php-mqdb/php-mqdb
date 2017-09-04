@@ -12,6 +12,7 @@ namespace PhpMqdb\Repository;
 
 use PhpMqdb\Filter;
 use PhpMqdb\Message\MessageInterface;
+use PhpMqdb\Exception\EmptySetValuesException;
 
 /**
  * Interface for Message Repository
@@ -110,7 +111,7 @@ interface MessageRepositoryInterface
      *
      * @param  string $table
      * @return $this
-     * @throws \PhpMQ\Exception\EmptySetValuesException
+     * @throws EmptySetValuesException
      * @throws \LogicException
      */
     public function setTable($table);
