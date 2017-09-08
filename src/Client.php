@@ -87,7 +87,7 @@ class Client
      * Count messages based on given context
      *
      * @param Filter $filter
-     * @return mixed
+     * @return int
      */
     public function countMessages(Filter $filter)
     {

@@ -374,7 +374,7 @@ abstract class AbstractDatabaseMessageRepository implements MessageRepositoryInt
      */
     private function buildQueryCount(Filter $filter)
     {
-        $query = 'SELECT COUNT(1) FROM ' . self::$table . ' ' . $this->buildWhere($filter);
+        $query = 'SELECT COUNT(' . self::$fields['id'] . ') FROM ' . self::$table . ' ' . $this->buildWhere($filter);
 
         return $query;
     }
