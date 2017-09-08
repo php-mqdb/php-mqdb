@@ -148,6 +148,25 @@ abstract class AbstractDatabaseMessageRepository implements MessageRepositoryInt
     /**
      * {@inheritdoc}
      */
+    public function countMessages(Filter $filter)
+    {
+        try {
+            $query = $this->buildQueryCount($filter);
+
+            $stmt = $this->connection->prepare($query);
+            $stmt->execute($this->bind);
+
+            $count = $stmt->fetchColumn();
+        } finally {
+            $this->cleanQuery();
+        }
+
+        return $count;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
     public function publishMessage(Message\MessageInterface $message)
     {
         if (empty($message->getId())) {
@@ -345,6 +364,17 @@ abstract class AbstractDatabaseMessageRepository implements MessageRepositoryInt
         $fields = empty($pendingId) ? self::$fields['id'] : implode(', ', self::$fields);
 
         $query = 'SELECT ' . $fields . ' FROM ' . self::$table . ' ' . $this->buildWhere($filter, $pendingId) . ' ORDER BY ' . self::$fields['date_create'] . ' ASC ' . $this->buildLimit($filter);
+
+        return $query;
+    }
+
+    /**
+     * @param Filter $filter
+     * @return string
+     */
+    private function buildQueryCount(Filter $filter)
+    {
+        $query = 'SELECT COUNT(1) FROM ' . self::$table . ' ' . $this->buildWhere($filter);
 
         return $query;
     }

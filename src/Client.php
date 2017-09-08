@@ -84,6 +84,17 @@ class Client
     }
 
     /**
+     * Count messages based on given context
+     *
+     * @param Filter $filter
+     * @return mixed
+     */
+    public function countMessages(Filter $filter)
+    {
+        return $this->messageRepository->countMessages($filter);
+    }
+
+    /**
      * Publish message in queue.
      *
      * @param  Message\MessageInterface $message
