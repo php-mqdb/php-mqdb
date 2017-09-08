@@ -72,6 +72,14 @@ interface MessageRepositoryInterface
     public function getMessages(Filter $filter);
 
     /**
+     * Count messages based on given context
+     *
+     * @param Filter $filter
+     * @return int
+     */
+    public function countMessages(Filter $filter);
+
+    /**
      * Publish message in queue.
      *
      * @param  MessageInterface $message
