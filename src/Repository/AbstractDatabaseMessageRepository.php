@@ -10,7 +10,7 @@
 namespace PhpMqdb\Repository;
 
 use Doctrine\DBAL\Connection;
-use Doctrine\DBAL\DBALException;
+use Doctrine\DBAL\Exception\DriverException;
 use PhpMqdb\Exception\EmptySetValuesException;
 use PhpMqdb\Exception\NotSupportedConnectorException;
 use PhpMqdb\Filter;
@@ -301,7 +301,7 @@ abstract class AbstractDatabaseMessageRepository implements MessageRepositoryInt
      *
      * @param string $query
      * @return \Doctrine\DBAL\Driver\Statement|\PDOStatement
-     * @throws DBALException
+     * @throws DriverException
      */
     private function executeQuery($query)
     {
@@ -309,11 +309,11 @@ abstract class AbstractDatabaseMessageRepository implements MessageRepositoryInt
             $stmt = $this->connection->prepare($query);
 
             try {
-                $stmt->execute($this->bind);
+                @$stmt->execute($this->bind);
 
-            } catch (DBALException $exception) {
+            } catch (DriverException $exception) {
 
-                if (stripos($exception->getMessage(), "MySQL server has gone away") === false) {
+                if ($exception->getErrorCode() !== 2006 || $exception->getSQLState() !== 'HY000') {
                     throw $exception;
                 }
 
