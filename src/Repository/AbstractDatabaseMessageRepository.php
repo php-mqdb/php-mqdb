@@ -10,7 +10,7 @@
 namespace PhpMqdb\Repository;
 
 use Doctrine\DBAL\Connection;
-use Doctrine\DBAL\Driver\PingableConnection;
+use Doctrine\DBAL\DBALException;
 use PhpMqdb\Exception\EmptySetValuesException;
 use PhpMqdb\Exception\NotSupportedConnectorException;
 use PhpMqdb\Filter;
@@ -301,15 +301,29 @@ abstract class AbstractDatabaseMessageRepository implements MessageRepositoryInt
      *
      * @param string $query
      * @return \Doctrine\DBAL\Driver\Statement|\PDOStatement
+     * @throws DBALException
      */
     private function executeQuery($query)
     {
         try {
             $stmt = $this->connection->prepare($query);
-            if ($this->connection instanceof PingableConnection) {
-                $this->connection->ping(); // Ping connexion to avoid "MySQL has gone away" messages
+
+            try {
+                $stmt->execute($this->bind);
+
+            } catch (DBALException $exception) {
+
+                if (stripos($exception->getMessage(), "MySQL server has gone away") === false) {
+                    throw $exception;
+                }
+
+                // If exception and message contains "MySQL server has gone away"
+                //  => close connection to force reconnect + replay query
+                $this->connection->close();
+                $stmt = $this->connection->prepare($query);
+                $stmt->execute($this->bind);
             }
-            $stmt->execute($this->bind);
+
         } finally {
             $this->cleanQuery();
         }
