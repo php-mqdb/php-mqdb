@@ -9,10 +9,7 @@
 
 namespace PhpMqdb\Repository;
 
-use Doctrine\DBAL\Connection;
-use Doctrine\DBAL\Exception\DriverException;
 use PhpMqdb\Exception\EmptySetValuesException;
-use PhpMqdb\Exception\NotSupportedConnectorException;
 use PhpMqdb\Filter;
 use PhpMqdb\Message;
 use PhpMqdb\Enumerator;
@@ -24,17 +21,14 @@ use PhpMqdb\Enumerator;
  */
 abstract class AbstractDatabaseMessageRepository implements MessageRepositoryInterface
 {
-    /** @var \PDO|Connection $connection */
-    private $connection = null;
+    /** @var array $bind */
+    protected $bind = [];
 
     /** @var string $classFactory */
     private $classFactory = Message\MessageFactory::class;
 
     /** @var array $where */
     private $where = [];
-
-    /** @var array $bind */
-    private $bind = [];
 
     /** @var string $table */
     private static $table = 'message_queue';
@@ -260,21 +254,6 @@ abstract class AbstractDatabaseMessageRepository implements MessageRepositoryInt
     }
 
     /**
-     * Set database connector
-     *
-     * @param \PDO|Connection
-     * @throws NotSupportedConnectorException
-     */
-    protected function setConnector($connection)
-    {
-        if (!$connection instanceof \PDO && !$connection instanceof Connection) {
-            throw new NotSupportedConnectorException();
-        }
-
-        $this->connection = $connection;
-    }
-
-    /**
      * Set message factory class.
      *
      * @param  string $classFactory
@@ -294,41 +273,6 @@ abstract class AbstractDatabaseMessageRepository implements MessageRepositoryInt
         $this->classFactory = $classFactory;
 
         return $this;
-    }
-
-    /**
-     * Run a query
-     *
-     * @param string $query
-     * @return \Doctrine\DBAL\Driver\Statement|\PDOStatement
-     * @throws DriverException
-     */
-    private function executeQuery($query)
-    {
-        try {
-            $stmt = $this->connection->prepare($query);
-
-            try {
-                @$stmt->execute($this->bind);
-
-            } catch (DriverException $exception) {
-
-                if ($exception->getErrorCode() !== 2006 || $exception->getSQLState() !== 'HY000') {
-                    throw $exception;
-                }
-
-                // If exception and message contains "MySQL server has gone away"
-                //  => close connection to force reconnect + replay query
-                $this->connection->close();
-                $stmt = $this->connection->prepare($query);
-                $stmt->execute($this->bind);
-            }
-
-        } finally {
-            $this->cleanQuery();
-        }
-
-        return $stmt;
     }
 
     /**
@@ -543,11 +487,19 @@ abstract class AbstractDatabaseMessageRepository implements MessageRepositoryInt
      *
      * @return $this
      */
-    private function cleanQuery()
+    protected function cleanQuery()
     {
         $this->where = [];
         $this->bind  = [];
 
         return $this;
     }
+
+    /**
+     * Run a query
+     *
+     * @param string $query
+
+     */
+    abstract protected function executeQuery($query);
 }
