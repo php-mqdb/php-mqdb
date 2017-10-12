@@ -24,7 +24,8 @@ use PhpMqdb\Filter;
 use PhpMqdb\Repository\PDOMessageRepository;
 
 //~ Client
-$client = new Client(new PDOMessageRepository($dn, $username, $password);
+$client = new Client(new PDOMessageRepository(new \PDO([...])));
+
 
 //~ Get a message
 $message = $client->getMessage(new Filter());
@@ -58,7 +59,7 @@ use PhpMqdb\Filter;
 use PhpMqdb\Repository\PDOMessageRepository;
 
 //~ Client
-$client = new Client(new PDOMessageRepository($dsn, $username, $password));
+$client = new Client(new PDOMessageRepository(new \PDO([...])));
 
 //~ Get a message
 $messages = $client->getMessages(new Filter());
@@ -90,7 +91,7 @@ $connection = new \PDO($dbConf->dsn, $dbConf->user, $dbConf->pass, $dbConf->opts
 $connection->setAttribute( \PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
 
 //~ Client
-$client = new Client(new PDOMessageRepository($dsn, $username, $password));
+$client = new Client(new PDOMessageRepository(new \PDO([...])));
 
 //~ Message content
 $content        = new \stdClass();
@@ -129,7 +130,7 @@ $connection = new \PDO($dbConf->dsn, $dbConf->user, $dbConf->pass, $dbConf->opts
 $connection->setAttribute( \PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
 
 //~ Client
-$client = new Client(new PDOMessageRepository($dsn, $username, $password));
+$client = new Client(new PDOMessageRepository(new \PDO([...])));
 
 //~ Message content
 $content        = new \stdClass();

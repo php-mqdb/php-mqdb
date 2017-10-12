@@ -37,7 +37,7 @@ class DBALMessageRepository extends AbstractDatabaseMessageRepository
 
     /**
      * @param string $query
-     * @return \Doctrine\DBAL\Driver\Statement|\PDOStatement
+     * @return \Doctrine\DBAL\Driver\Statement
      * @throws \Exception
      */
     protected function executeQuery($query)
