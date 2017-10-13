@@ -40,8 +40,12 @@ class PDOMessageRepository extends AbstractDatabaseMessageRepository
      */
     protected function executeQuery($query)
     {
-        $stmt = $this->connection->prepare($query);
-        $stmt->execute($this->bind);
+        try {
+            $stmt = $this->connection->prepare($query);
+            $stmt->execute($this->bind);
+        } finally {
+            $this->cleanQuery();
+        }
 
         return $stmt;
     }
