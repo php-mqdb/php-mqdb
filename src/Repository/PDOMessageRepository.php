@@ -18,15 +18,35 @@ use PhpMqdb\Message;
  */
 class PDOMessageRepository extends AbstractDatabaseMessageRepository
 {
+    /** @var \PDO $connection */
+    private $connection = null;
+
     /**
-     * AbstractDatabaseMessageRepository constructor.
+     * PDOMessageRepository constructor.
      *
      * @param \PDO $connection
      * @param string $classFactory
      */
     public function __construct(\PDO $connection, $classFactory = Message\MessageFactory::class)
     {
-        $this->setConnector($connection);
+        $this->connection = $connection;
         $this->setClassMessageFactory($classFactory);
+    }
+
+    /**
+     * @param string $query
+     * @return \PDOStatement
+     * @throws \Exception
+     */
+    protected function executeQuery($query)
+    {
+        try {
+            $stmt = $this->connection->prepare($query);
+            $stmt->execute($this->bind);
+        } finally {
+            $this->cleanQuery();
+        }
+
+        return $stmt;
     }
 }

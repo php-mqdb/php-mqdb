@@ -9,9 +9,7 @@
 
 namespace PhpMqdb\Repository;
 
-use Doctrine\DBAL\Connection;
 use PhpMqdb\Exception\EmptySetValuesException;
-use PhpMqdb\Exception\NotSupportedConnectorException;
 use PhpMqdb\Filter;
 use PhpMqdb\Message;
 use PhpMqdb\Enumerator;
@@ -23,17 +21,14 @@ use PhpMqdb\Enumerator;
  */
 abstract class AbstractDatabaseMessageRepository implements MessageRepositoryInterface
 {
-    /** @var \PDO|Connection $connection */
-    private $connection = null;
+    /** @var array $bind */
+    protected $bind = [];
 
     /** @var string $classFactory */
     private $classFactory = Message\MessageFactory::class;
 
     /** @var array $where */
     private $where = [];
-
-    /** @var array $bind */
-    private $bind = [];
 
     /** @var string $table */
     private static $table = 'message_queue';
@@ -59,12 +54,7 @@ abstract class AbstractDatabaseMessageRepository implements MessageRepositoryInt
      */
     public function ack($id)
     {
-        try {
-            $stmt = $this->connection->prepare($this->buildQueryUpdate($id, Enumerator\Status::ACK_RECEIVED));
-            $stmt->execute($this->bind);
-        } finally {
-            $this->cleanQuery();
-        }
+        $this->executeQuery($this->buildQueryUpdate($id, Enumerator\Status::ACK_RECEIVED));
 
         return $this;
     }
@@ -80,12 +70,7 @@ abstract class AbstractDatabaseMessageRepository implements MessageRepositoryInt
             $status = Enumerator\Status::IN_QUEUE;
         }
 
-        try {
-            $stmt = $this->connection->prepare($this->buildQueryUpdate($id, $status));
-            $stmt->execute($this->bind);
-        } finally {
-            $this->cleanQuery();
-        }
+        $this->executeQuery($this->buildQueryUpdate($id, $status));
 
         return $this;
     }
@@ -114,32 +99,26 @@ abstract class AbstractDatabaseMessageRepository implements MessageRepositoryInt
     {
         $messages = [];
 
-        try {
+        $query = $this->buildQueryGet($filter, $this->protectMessages($filter));
 
-            $query = $this->buildQueryGet($filter, $this->protectMessages($filter));
+        $stmt = $this->executeQuery($query);
 
-            $stmt = $this->connection->prepare($query);
-            $stmt->execute($this->bind);
+        while (null != ($row = $stmt->fetch(\PDO::FETCH_OBJ))) {
 
-            while (null != ($row = $stmt->fetch(\PDO::FETCH_OBJ))) {
+            $message = call_user_func_array([$this->classFactory, 'create'], [$row->{self::$fields['content_type']}]);
+            $message->setId($row->{self::$fields['id']})
+                ->setStatus($row->{self::$fields['status']})
+                ->setPriority($row->{self::$fields['priority']})
+                ->setTopic($row->{self::$fields['topic']})
+                ->setContent($row->{self::$fields['content']})
+                ->setContentType($row->{self::$fields['content_type']})
+                ->setEntityId($row->{self::$fields['entity_id']})
+                ->setDateExpiration($row->{self::$fields['date_expiration']})
+                ->setDateAvailability($row->{self::$fields['date_availability']})
+                ->setDateCreate($row->{self::$fields['date_create']})
+                ->setDateUpdate($row->{self::$fields['date_update']});
 
-                $message = call_user_func_array([$this->classFactory, 'create'], [$row->{self::$fields['content_type']}]);
-                $message->setId($row->{self::$fields['id']})
-                    ->setStatus($row->{self::$fields['status']})
-                    ->setPriority($row->{self::$fields['priority']})
-                    ->setTopic($row->{self::$fields['topic']})
-                    ->setContent($row->{self::$fields['content']})
-                    ->setContentType($row->{self::$fields['content_type']})
-                    ->setEntityId($row->{self::$fields['entity_id']})
-                    ->setDateExpiration($row->{self::$fields['date_expiration']})
-                    ->setDateAvailability($row->{self::$fields['date_availability']})
-                    ->setDateCreate($row->{self::$fields['date_create']})
-                    ->setDateUpdate($row->{self::$fields['date_update']});
-
-                $messages[] = $message;
-            }
-        } finally {
-            $this->cleanQuery();
+            $messages[] = $message;
         }
 
         return $messages;
@@ -150,16 +129,11 @@ abstract class AbstractDatabaseMessageRepository implements MessageRepositoryInt
      */
     public function countMessages(Filter $filter)
     {
-        try {
-            $query = $this->buildQueryCount($filter);
+        $query = $this->buildQueryCount($filter);
 
-            $stmt = $this->connection->prepare($query);
-            $stmt->execute($this->bind);
+        $stmt = $this->executeQuery($query);
 
-            $count = $stmt->fetchColumn();
-        } finally {
-            $this->cleanQuery();
-        }
+        $count = $stmt->fetchColumn();
 
         return $count;
     }
@@ -181,13 +155,7 @@ abstract class AbstractDatabaseMessageRepository implements MessageRepositoryInt
 
             $this->bind[':existing_id'] = $message->getId();
         }
-
-        try {
-            $stmt = $this->connection->prepare($query);
-            $stmt->execute($this->bind);
-        } finally {
-            $this->cleanQuery();
-        }
+        $this->executeQuery($query);
 
         return $this;
     }
@@ -218,17 +186,12 @@ abstract class AbstractDatabaseMessageRepository implements MessageRepositoryInt
         $date = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
         $date = $date->sub($interval);
 
-        try {
-            $query = 'DELETE FROM ' . self::$table . ' WHERE ' . self::$fields['status'] . ' IN ( ' . implode(', ', array_keys($status)) . ') AND ' . self::$fields['date_update'] . ' <= :date_update AND ' . self::$fields['date_update'] . ' IS NOT NULL';
+        $query = 'DELETE FROM ' . self::$table . ' WHERE ' . self::$fields['status'] . ' IN ( ' . implode(', ', array_keys($status)) . ') AND ' . self::$fields['date_update'] . ' <= :date_update AND ' . self::$fields['date_update'] . ' IS NOT NULL';
 
-            $this->bind                 = $status;
-            $this->bind[':date_update'] = $date->format('Y-m-d H:i:s');
+        $this->bind                 = $status;
+        $this->bind[':date_update'] = $date->format('Y-m-d H:i:s');
 
-            $stmt = $this->connection->prepare($query);
-            $stmt->execute($this->bind);
-        } finally {
-            $this->cleanQuery();
-        }
+        $this->executeQuery($query);
 
         return $this;
     }
@@ -241,18 +204,13 @@ abstract class AbstractDatabaseMessageRepository implements MessageRepositoryInt
         $date = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
         $date = $date->sub($interval);
 
-        try {
-            $query = 'UPDATE ' . self::$table . ' SET ' . self::$fields['status'] . ' = :new_message_status WHERE ' . self::$fields['status'] . ' = :message_status AND ' . self::$fields['date_update'] . ' <= :date_update AND ' . self::$fields['date_update'] . ' IS NOT NULL';
+        $query = 'UPDATE ' . self::$table . ' SET ' . self::$fields['status'] . ' = :new_message_status WHERE ' . self::$fields['status'] . ' = :message_status AND ' . self::$fields['date_update'] . ' <= :date_update AND ' . self::$fields['date_update'] . ' IS NOT NULL';
 
-            $this->bind[':new_message_status'] = Enumerator\Status::ACK_NOT_RECEIVED;
-            $this->bind[':message_status']     = Enumerator\Status::ACK_PENDING;
-            $this->bind[':date_update']        = $date->format('Y-m-d H:i:s');
+        $this->bind[':new_message_status'] = Enumerator\Status::ACK_NOT_RECEIVED;
+        $this->bind[':message_status']     = Enumerator\Status::ACK_PENDING;
+        $this->bind[':date_update']        = $date->format('Y-m-d H:i:s');
 
-            $stmt = $this->connection->prepare($query);
-            $stmt->execute($this->bind);
-        } finally {
-            $this->cleanQuery();
-        }
+        $this->executeQuery($query);
 
         return $this;
     }
@@ -296,21 +254,6 @@ abstract class AbstractDatabaseMessageRepository implements MessageRepositoryInt
     }
 
     /**
-     * Set database connector
-     *
-     * @param \PDO|Connection
-     * @throws NotSupportedConnectorException
-     */
-    protected function setConnector($connection)
-    {
-        if (!$connection instanceof \PDO && !$connection instanceof Connection) {
-            throw new NotSupportedConnectorException();
-        }
-
-        $this->connection = $connection;
-    }
-
-    /**
      * Set message factory class.
      *
      * @param  string $classFactory
@@ -342,12 +285,7 @@ abstract class AbstractDatabaseMessageRepository implements MessageRepositoryInt
     {
         $pendingId = $this->generateId(1);
 
-        try {
-            $stmt = $this->connection->prepare($this->buildQueryProtect($filter, $pendingId));
-            $stmt->execute($this->bind);
-        } finally {
-            $this->cleanQuery();
-        }
+        $this->executeQuery($this->buildQueryProtect($filter, $pendingId));
 
         return $pendingId;
     }
@@ -549,11 +487,19 @@ abstract class AbstractDatabaseMessageRepository implements MessageRepositoryInt
      *
      * @return $this
      */
-    private function cleanQuery()
+    protected function cleanQuery()
     {
         $this->where = [];
         $this->bind  = [];
 
         return $this;
     }
+
+    /**
+     * Run a query
+     *
+     * @param string $query
+
+     */
+    abstract protected function executeQuery($query);
 }
