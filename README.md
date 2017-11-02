@@ -13,6 +13,32 @@ You must have a database with given table to store messages (the messages queue)
 An sample create table is provide in sql/ directory.
 
 
+## Getting messages - How to work
+### Default ordering
+Functions getMessage() & getMessages get messages in following order:
+ - priority ascendant
+ - date availability ascendant
+ - date create ascendant
+
+So, the messages with high priority, and with prior date availability (and with prior creation date)
+will be get in priority.
+
+### Filtering
+You may filter messages you want to get. Possible filters are:
+ - topic:  specify which topic you want (default: null). You can use `*` character in topic filter (like: publish.*)
+ - statuses: Get messages with given status(es) (default get pending messages)
+ - priorities: Get messages with only given priority(ies) (default: no filtering)
+ - entity id: Filter only on the given entity id (default: no filtering)
+
+### Filtering on date
+By default, the system only gets the available and non-expired messages.
+You can change filter value for available date & expiration date. You also can change the current date.
+
+### Limit result
+By default, getMessage() only gets one message.
+You may get multiple messages at the same time by using getMessages(), but you need to set how much messages you want (default is 1)
+
+
 ## Usage
 ### Get a message
 
