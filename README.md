@@ -24,19 +24,19 @@ So, the messages with high priority, and with prior date availability (and with 
 will be get in priority.
 
 ### Filtering
-You may filtering message you want to get. Possible filters are:
+You may filter messages you want to get. Possible filters are:
  - topic:  specify which topic you want (default: null). You can use `*` character in topic filter (like: publish.*)
  - statuses: Get messages with given status(es) (default get pending messages)
  - priorities: Get messages with only given priority(ies) (default: no filtering)
  - entity id: Filter only on the given entity id (default: no filtering)
 
 ### Filtering on date
-By default, the system get only the message available and non-expired.
+By default, the system only gets the available and non-expired messages.
 You can change filter value for available date & expiration date. You also can change the current date.
 
 ### Limit result
-By default, getMessage() get only one message.
-You may get multiple message at the same time by using getMessages(), but you need to set how much message you want (default is 1)
+By default, getMessage() only gets one message.
+You may get multiple messages at the same time by using getMessages(), but you need to set how much messages you want (default is 1)
 
 
 ## Usage

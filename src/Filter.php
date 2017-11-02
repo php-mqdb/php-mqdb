@@ -205,7 +205,7 @@ class Filter
      * @throws \UnderflowException
      * @throws \OverflowException
      */
-    public function setStatus(array $statuses)
+    public function setStatuses(array $statuses)
     {
         foreach ($statuses as $status) {
             $status = (int) $status;
