@@ -52,7 +52,7 @@ class FilterTest extends TestCase
      */
     public function testPriorityUnderflowException()
     {
-        (new filter())->setPriority(0);
+        (new filter())->setPriorities([0]);
     }
 
     /**
@@ -60,7 +60,7 @@ class FilterTest extends TestCase
      */
     public function testPriorityOverflowException()
     {
-        (new filter())->setPriority(6);
+        (new filter())->setPriorities([6]);
     }
 
     /**
@@ -70,9 +70,9 @@ class FilterTest extends TestCase
     {
         $filter = new filter();
 
-        self::assertEquals(Priority::VERY_LOW, $filter->setPriority(Priority::VERY_LOW)->getPriority());
-        self::assertEquals(Priority::MEDIUM, $filter->setPriority(Priority::MEDIUM)->getPriority());
-        self::assertEquals(Priority::VERY_HIGH, $filter->setPriority(Priority::VERY_HIGH)->getPriority());
+        self::assertEquals([Priority::VERY_LOW], $filter->setPriorities([Priority::VERY_LOW])->getPriorities());
+        self::assertEquals([Priority::MEDIUM], $filter->setPriorities([Priority::MEDIUM])->getPriorities());
+        self::assertEquals([Priority::VERY_HIGH], $filter->setPriorities([Priority::VERY_HIGH])->getPriorities());
     }
 
     /**
@@ -81,7 +81,7 @@ class FilterTest extends TestCase
      */
     public function testStatusUnderflowException()
     {
-        (new filter())->setStatus(-1);
+        (new filter())->setStatuses([-1]);
     }
 
     /**
@@ -90,7 +90,7 @@ class FilterTest extends TestCase
      */
     public function testStatusOverflowException()
     {
-        (new filter())->setStatus(6);
+        (new filter())->setStatuses([6]);
     }
 
     /**
@@ -100,11 +100,11 @@ class FilterTest extends TestCase
     {
         $filter = new filter();
 
-        self::assertEquals(Status::IN_QUEUE, $filter->setStatus(Status::IN_QUEUE)->getStatus());
-        self::assertEquals(Status::ACK_PENDING, $filter->setStatus(Status::ACK_PENDING)->getStatus());
-        self::assertEquals(Status::ACK_RECEIVED, $filter->setStatus(Status::ACK_RECEIVED)->getStatus());
-        self::assertEquals(Status::NACK_RECEIVED, $filter->setStatus(Status::NACK_RECEIVED)->getStatus());
-        self::assertEquals(Status::ACK_NOT_RECEIVED, $filter->setStatus(Status::ACK_NOT_RECEIVED)->getStatus());
+        self::assertEquals([Status::IN_QUEUE], $filter->setStatuses([Status::IN_QUEUE])->getStatuses());
+        self::assertEquals([Status::ACK_PENDING], $filter->setStatuses([Status::ACK_PENDING])->getStatuses());
+        self::assertEquals([Status::ACK_RECEIVED], $filter->setStatuses([Status::ACK_RECEIVED])->getStatuses());
+        self::assertEquals([Status::NACK_RECEIVED], $filter->setStatuses([Status::NACK_RECEIVED])->getStatuses());
+        self::assertEquals([Status::ACK_NOT_RECEIVED], $filter->setStatuses([Status::ACK_NOT_RECEIVED])->getStatuses());
     }
 
     /**
