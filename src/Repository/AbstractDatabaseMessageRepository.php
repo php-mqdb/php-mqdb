@@ -502,8 +502,8 @@ abstract class AbstractDatabaseMessageRepository implements MessageRepositoryInt
     /**
      * Run a query
      *
-     * @param string $query
-
+     * @param  string $query
+     * @return \PDOStatement|\Doctrine\DBAL\Driver\Statement
      */
     abstract protected function executeQuery($query);
 }
