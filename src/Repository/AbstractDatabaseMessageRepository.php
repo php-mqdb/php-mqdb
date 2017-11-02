@@ -163,6 +163,33 @@ abstract class AbstractDatabaseMessageRepository implements MessageRepositoryInt
     /**
      * {@inheritdoc}
      */
+    public function publishUniqueEntityMessage(Message\MessageInterface $message, array $checkedStatuses = [Enumerator\Status::IN_QUEUE])
+    {
+        if (empty($message->getEntityId())) {
+            throw new \LogicException("Can't use publishUniqueEntityMessage if there is not Entity in the message");
+        }
+
+        $filterExisting = new Filter();
+        $filterExisting
+            ->setEntityId($message->getEntityId())
+            ->setStatuses($checkedStatuses)
+            ;
+
+        $existingMessage = $this->getMessage($filterExisting);
+
+        if ($existingMessage instanceof Message\MessageInterface) { // Existing message
+            $message
+                ->setId($existingMessage->getId())                                              // We update the existing message
+                ->setPriority(min($message->getPriority(), $existingMessage->getPriority()))    // We keep the highest priority (ie lowest value)
+            ;
+        }
+
+        return $this->publishMessage($message);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
     public function cleanMessages(\DateInterval $interval, $deleteBitmask = self::DELETE_SAFE)
     {
         $status = [];

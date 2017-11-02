@@ -10,6 +10,7 @@
 
 namespace PhpMqdb\Repository;
 
+use PhpMqdb\Enumerator\Status;
 use PhpMqdb\Filter;
 use PhpMqdb\Message\MessageInterface;
 
@@ -86,6 +87,16 @@ interface MessageRepositoryInterface
      * @return $this
      */
     public function publishMessage(MessageInterface $message);
+
+    /**
+     * Publish message after checking there is not already a message for the same entity_id
+     *  Note: if the new message has a higher priority, existing message is updated
+     *
+     * @param MessageInterface $message
+     * @param array $checkedStatuses list of statuses to check (default: only IN_QUEUE messages)
+     * @return mixed
+     */
+    public function publishUniqueEntityMessage(MessageInterface $message, array $checkedStatuses = [Status::IN_QUEUE]);
 
     /**
      * Clean pending message with date update above given interval.
