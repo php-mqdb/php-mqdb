@@ -10,8 +10,7 @@
 namespace PhpMqdb\Examples;
 
 use PhpMqdb\Client;
-use PhpMqdb\Enumerator\Priority;
-use PhpMqdb\Enumerator\Status;
+use PhpMqdb\Enumerator;
 use PhpMqdb\Message;
 use PhpMqdb\Repository\PDOMessageRepository;
 
@@ -28,23 +27,26 @@ $repository = new PDOMessageRepository($connection);
 //~ Client
 $client = new Client($repository);
 
+$date = new \DateTimeImmutable();
+
 //~ Publish messages
 for($index = 1; $index <= 1000; $index++) {
     echo 'process ' . $index . "\r";
+
+    $interval = new \DateInterval('PT' . rand(0,10) . 'M' . rand(0, 59) . 'S');
 
     $content = new \stdClass();
     $content->id    = $index;
     $content->title = 'Content title #' . $index;
 
-
     $message = new Message\Message();
-    $message->setPriority(Priority::MEDIUM);
+    $message->setPriority(rand(Enumerator\Priority::VERY_HIGH,Enumerator\Priority::VERY_LOW));
     $message->setTopic('publish.content');
-    $message->setStatus(Status::IN_QUEUE);
+    $message->setStatus(Enumerator\Status::IN_QUEUE);
     $message->setContent(json_encode($content));
     $message->setContentType('json');
     $message->setEntityId($content->id);
-    $message->setDateAvailability('2017-01-01 00:00:00');
+    $message->setDateAvailability($date->add($interval)->format('Y-m-d H:i:s'));
     $message->setDateCreate((new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->format('Y-m-d H:i:s'));
 
     $client->publish($message);

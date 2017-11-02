@@ -28,23 +28,26 @@ class Filter
     /** @var int $limit */
     private $limit = 1;
 
-    /** @var int $status */
-    private $status = 0;
+    /** @var int[] $statuses */
+    private $statuses = [Enumerator\Status::IN_QUEUE];
 
-    /** @var int $priority */
-    private $priority = 0;
+    /** @var int[] $priorities */
+    private $priorities = [];
 
     /** @var int $topic */
     private $topic = '';
 
-    /** @var string $entityId */
+    /** @var string|null $entityId */
     private $entityId = null;
 
     /** @var string|null $dateExpiration Format: Y-m-d H:i:s */
-    private $dateExpiration = null;
+    private $dateTimeCurrent = null;
 
     /** @var string $dateAvailability Format: Y-m-d H:i:s */
-    private $dateAvailability = '';
+    private $dateTimeAvailability = null;
+
+    /** @var string|null $dateExpiration Format: Y-m-d H:i:s */
+    private $dateTimeExpiration = null;
 
     /**
      * Filter constructor.
@@ -53,9 +56,8 @@ class Filter
      */
     public function __construct($maxLimit = 1000)
     {
-        $now = (string) date('Y-m-d H:i:s');
-
-        $this->setDateTimeAvailability($now);
+        //~ Set current UTC date time (based on current timestamp)
+        $this->setDateTimeCurrent((string) date('Y-m-d H:i:s', time()));
 
         $this->setMaxLimit($maxLimit);
     }
@@ -81,23 +83,23 @@ class Filter
     }
 
     /**
-     * Get priority filter.
+     * Get priorities filter.
      *
-     * @return int
+     * @return int[]
      */
-    public function getPriority()
+    public function getPriorities()
     {
-        return $this->priority;
+        return $this->priorities;
     }
 
     /**
-     * Get status filter.
+     * Get statuses filter.
      *
-     * @return int
+     * @return int[]
      */
-    public function getStatus()
+    public function getStatuses()
     {
-        return $this->status;
+        return $this->statuses;
     }
 
     /**
@@ -111,13 +113,23 @@ class Filter
     }
 
     /**
+     * Return current date time.
+     *
+     * @return string
+     */
+    public function getDateTimeCurrent()
+    {
+        return $this->dateTimeCurrent;
+    }
+
+    /**
      * Return date of availability.
      *
      * @return string
      */
     public function getDateTimeAvailability()
     {
-        return $this->dateAvailability;
+        return $this->dateTimeAvailability;
     }
 
     /**
@@ -127,7 +139,17 @@ class Filter
      */
     public function getDateTimeExpiration()
     {
-        return $this->dateExpiration;
+        return $this->dateTimeExpiration;
+    }
+
+    /**
+     * Return entity id.
+     *
+     * @return string
+     */
+    public function getEntityId()
+    {
+        return $this->entityId;
     }
 
     /**
@@ -176,51 +198,55 @@ class Filter
     }
 
     /**
-     * Set status filter
+     * Set statuses filter
      *
-     * @param  int $status
+     * @param  int[] $statuses
      * @return $this
      * @throws \UnderflowException
      * @throws \OverflowException
      */
-    public function setStatus($status)
+    public function setStatus(array $statuses)
     {
-        $status = (int) $status;
+        foreach ($statuses as $status) {
+            $status = (int) $status;
 
-        if ($status < Enumerator\Status::IN_QUEUE) {
-            throw new \UnderflowException('The lowest status allowed is Status::IN_QUEUE (value: ' . Enumerator\Status::IN_QUEUE . ')!');
+            if ($status < Enumerator\Status::IN_QUEUE) {
+                throw new \UnderflowException('The lowest status allowed is Status::IN_QUEUE (value: ' . Enumerator\Status::IN_QUEUE . ')!');
+            }
+
+            if ($status > Enumerator\Status::ACK_NOT_RECEIVED) {
+                throw new \OverflowException('The greatest status allowed is Status::ACK_RECEIVED (value: ' . Enumerator\Status::ACK_RECEIVED . ')!');
+            }
+
+            $this->statuses[] = $status;
         }
-
-        if ($status > Enumerator\Status::ACK_NOT_RECEIVED) {
-            throw new \OverflowException('The greatest status allowed is Status::ACK_RECEIVED (value: ' . Enumerator\Status::ACK_RECEIVED . ')!');
-        }
-
-        $this->status = $status;
 
         return $this;
     }
 
     /**
-     * Set priority filter
+     * Set priorities filter
      *
-     * @param  int $priority
+     * @param  int[] $priorities
      * @return $this
      * @throws \UnderflowException
      * @throws \OverflowException
      */
-    public function setPriority($priority)
+    public function setPriorities(array $priorities)
     {
-        $priority = (int) $priority;
+        foreach ($priorities as $priority) {
+            $priority = (int) $priority;
 
-        if ($priority < Enumerator\Priority::VERY_HIGH) {
-            throw new \UnderflowException('The highest priority allowed is Priority::VERY_HIGH (value: ' . Enumerator\Priority::VERY_HIGH . ')!');
+            if ($priority < Enumerator\Priority::VERY_HIGH) {
+                throw new \UnderflowException('The highest priority allowed is Priority::VERY_HIGH (value: ' . Enumerator\Priority::VERY_HIGH . ')!');
+            }
+
+            if ($priority > Enumerator\Priority::VERY_LOW) {
+                throw new \OverflowException('The lowest status allowed is Priority::VERY_LOW (value: ' . Enumerator\Priority::VERY_LOW . ')!');
+            }
+
+            $this->priorities[] = $priority;
         }
-
-        if ($priority > Enumerator\Priority::VERY_LOW) {
-            throw new \OverflowException('The lowest status allowed is Priority::VERY_LOW (value: ' . Enumerator\Priority::VERY_LOW . ')!');
-        }
-
-        $this->priority = $priority;
 
         return $this;
     }
@@ -250,6 +276,25 @@ class Filter
     }
 
     /**
+     * Set current date time.
+     *
+     * @param  string $date Format: Y-m-d H:i:s
+     * @return $this
+     */
+    public function setDateTimeCurrent($date)
+    {
+        $date = \DateTimeImmutable::createFromFormat('Y-m-d H:i:s', (string) $date, new \DateTimeZone('UTC'));
+
+        if (!$date instanceof \DateTimeImmutable) {
+            throw new \RuntimeException();
+        }
+
+        $this->dateTimeCurrent = $date->format('Y-m-d H:i:s');
+
+        return $this;
+    }
+
+    /**
      * Set availability date filter.
      *
      * @param  string $date Format: Y-m-d H:i:s
@@ -263,7 +308,7 @@ class Filter
             throw new \RuntimeException();
         }
 
-        $this->dateAvailability = $date->format('Y-m-d H:i:s');
+        $this->dateTimeAvailability = $date->format('Y-m-d H:i:s');
 
         return $this;
     }
@@ -288,7 +333,7 @@ class Filter
             throw new \UnderflowException('Expiration date time is prior to the current date time!');
         }
 
-        $this->dateExpiration = $date->format('Y-m-d H:i:s');
+        $this->dateTimeExpiration = $date->format('Y-m-d H:i:s');
 
         return $this;
     }
@@ -313,15 +358,9 @@ class Filter
     }
 
     /**
-     * @return string
-     */
-    public function getEntityId()
-    {
-        return $this->entityId;
-    }
-
-    /**
-     * @param string $entityId
+     * Set entity id filter.
+     *
+     * @param  string $entityId
      * @return $this
      */
     public function setEntityId($entityId)

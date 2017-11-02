@@ -300,8 +300,17 @@ abstract class AbstractDatabaseMessageRepository implements MessageRepositoryInt
     private function buildQueryGet(Filter $filter, $pendingId = null)
     {
         $fields = empty($pendingId) ? self::$fields['id'] : implode(', ', self::$fields);
+        $order  = [
+            self::$fields['priority']          => 'ASC',
+            self::$fields['date_availability'] => 'ASC',
+            self::$fields['date_create']       => 'ASC',
+        ];
 
-        $query = 'SELECT ' . $fields . ' FROM ' . self::$table . ' ' . $this->buildWhere($filter, $pendingId) . ' ORDER BY ' . self::$fields['date_create'] . ' ASC ' . $this->buildLimit($filter);
+        $query = 'SELECT ' . $fields .
+            ' FROM ' . self::$table . ' ' .
+            $this->buildWhere($filter, $pendingId) .
+            $this->buildOrder($order) .
+            $this->buildLimit($filter);
 
         return $query;
     }
@@ -326,7 +335,17 @@ abstract class AbstractDatabaseMessageRepository implements MessageRepositoryInt
      */
     private function buildQueryProtect(Filter $filter, $pendingId = null)
     {
-        $query = 'UPDATE ' . self::$table . ' SET ' . self::$fields['pending_id'] . ' = :new_pending_id, ' . self::$fields['status'] . ' = :new_status ' . $this->buildWhere($filter) . ' ORDER BY ' . self::$fields['date_create'] . ' ASC ' . $this->buildLimit($filter);
+        $order  = [
+            self::$fields['priority']          => 'ASC',
+            self::$fields['date_availability'] => 'ASC',
+            self::$fields['date_create']       => 'ASC',
+        ];
+
+        $query = 'UPDATE ' . self::$table .
+            ' SET ' . self::$fields['pending_id'] . ' = :new_pending_id, ' . self::$fields['status'] . ' = :new_status ' .
+            $this->buildWhere($filter) .
+            $this->buildOrder($order) .
+            $this->buildLimit($filter);
 
         $this->bind[':new_status']     = Enumerator\Status::ACK_PENDING;
         $this->bind[':new_pending_id'] = $pendingId;
@@ -343,7 +362,9 @@ abstract class AbstractDatabaseMessageRepository implements MessageRepositoryInt
      */
     private function buildQueryUpdate($id, $status)
     {
-        $query = 'UPDATE ' . self::$table . ' SET ' . self::$fields['status'] . ' = :new_status, ' . self::$fields['date_update'] . ' = :new_date_update, ' . self::$fields['pending_id'] . ' = :new_pending_id' . ' WHERE ' . self::$fields['id'] . ' = :id';
+        $query = 'UPDATE ' . self::$table .
+            ' SET ' . self::$fields['status'] . ' = :new_status, ' . self::$fields['date_update'] . ' = :new_date_update, ' . self::$fields['pending_id'] . ' = :new_pending_id' .
+            ' WHERE ' . self::$fields['id'] . ' = :id';
 
         $this->bind[':new_status']      = (int) $status;
         $this->bind[':new_date_update'] = (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->format('Y-m-d H:i:s');
@@ -415,8 +436,6 @@ abstract class AbstractDatabaseMessageRepository implements MessageRepositoryInt
             return 'WHERE ' . implode(' AND ', $this->where);
         }
 
-        $this->addWhere(self::$fields['status'], $filter->getStatus());
-        $this->addWhere(self::$fields['date_availability'], $filter->getDateTimeAvailability(), '<=', true);
         $this->addWhere(self::$fields['pending_id'], null);
 
         if (!empty($filter->getTopic())) {
@@ -425,12 +444,21 @@ abstract class AbstractDatabaseMessageRepository implements MessageRepositoryInt
             $this->addWhere(self::$fields['topic'], $topic, $sign);
         }
 
-        if (!empty($filter->getPriority())) {
-            $this->addWhere(self::$fields['priority'], $filter->getPriority());
+        $this->addWhereIn(self::$fields['status'], $filter->getStatuses());
+        $this->addWhereIn(self::$fields['priority'], $filter->getPriorities());
+
+        //~ If have no date time availability set as filter, use current datetime.
+        if (!empty($filter->getDateTimeAvailability())) {
+            $this->addWhere(self::$fields['date_availability'], $filter->getDateTimeAvailability(), '<=', true);
+        } else {
+            $this->addWhere(self::$fields['date_availability'], $filter->getDateTimeCurrent(), '<=', true);
         }
 
+        //~ If have no date time expiration set as filter, use current datetime.
         if (!empty($filter->getDateTimeExpiration())) {
             $this->addWhere(self::$fields['date_expiration'], $filter->getDateTimeExpiration(), '>', true);
+        } else {
+            $this->addWhere(self::$fields['date_expiration'], $filter->getDateTimeCurrent(), '>', true);
         }
 
         if ($filter->getEntityId() !== null) { // Not empty as we may want to filter on entityId === ''
@@ -452,6 +480,27 @@ abstract class AbstractDatabaseMessageRepository implements MessageRepositoryInt
     }
 
     /**
+     * Build query order.
+     *
+     * @param  string[] $order
+     * @return string
+     */
+    private function buildOrder(array $order)
+    {
+        $orderBy = [];
+
+        foreach ($order as $field => $direction) {
+            $orderBy[] = $field . ' ' . $direction;
+        }
+
+        if (empty($orderBy)) {
+            return '';
+        }
+
+        return ' ORDER BY ' . implode(', ', $orderBy) . ' ';
+    }
+
+    /**
      * @param  string $field
      * @param  string|int $value
      * @param  string $sign
@@ -466,6 +515,34 @@ abstract class AbstractDatabaseMessageRepository implements MessageRepositoryInt
             $this->where[]            = ($orNull ? '(' : '') . "`${field}` $sign :${field}" . ($orNull ? " OR `${field}` IS NULL)" : '');
             $this->bind[':' . $field] = $value;
         }
+
+        return $this;
+    }
+
+    /**
+     * @param  string $field
+     * @param  array $values
+     * @return $this
+     */
+    private function addWhereIn($field, array $values)
+    {
+        if (empty($values)) {
+            return $this;
+        }
+
+        if (!is_array($values)) {
+            throw new \InvalidArgumentException('Values must be an array of value to filter.');
+        }
+
+        $where = [];
+        foreach ($values as $index => $value) {
+            $name = ':' . $field . '_' . $index;
+
+            $this->bind[$name] = $value;
+            $where[]           = $name;
+        }
+
+        $this->where[] = "`${field}` IN (" . implode(', ', $where) . ")";
 
         return $this;
     }
