@@ -433,6 +433,10 @@ abstract class AbstractDatabaseMessageRepository implements MessageRepositoryInt
             $this->addWhere(self::$fields['date_expiration'], $filter->getDateTimeExpiration(), '>', true);
         }
 
+        if ($filter->getEntityId() !== null) { // Not empty as we may want to filter on entityId === ''
+            $this->addWhere(self::$fields['entity_id'], $filter->getEntityId());
+        }
+
         return 'WHERE ' . implode(' AND ', $this->where);
     }
 

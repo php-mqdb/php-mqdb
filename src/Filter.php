@@ -37,6 +37,9 @@ class Filter
     /** @var int $topic */
     private $topic = '';
 
+    /** @var string $entityId */
+    private $entityId = null;
+
     /** @var string|null $dateExpiration Format: Y-m-d H:i:s */
     private $dateExpiration = null;
 
@@ -305,6 +308,25 @@ class Filter
         }
 
         $this->maxLimit = $limit;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getEntityId()
+    {
+        return $this->entityId;
+    }
+
+    /**
+     * @param string $entityId
+     * @return $this
+     */
+    public function setEntityId($entityId)
+    {
+        $this->entityId = $entityId;
 
         return $this;
     }
