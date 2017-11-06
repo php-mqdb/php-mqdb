@@ -141,17 +141,20 @@ abstract class AbstractDatabaseMessageRepository implements MessageRepositoryInt
     /**
      * {@inheritdoc}
      */
-    public function publishMessage(Message\MessageInterface $message)
+    public function publishMessage(Message\MessageInterface $message, $allowStatusUpdate = false)
     {
         if (empty($message->getId())) {
             $message->setId($this->generateId(4));
             $query = 'INSERT INTO ' . self::$table . ' ' . $this->buildQuerySet($message);
         } else {
-            $query = 'UPDATE ' . self::$table . ' ' . $this->buildQuerySet($message, [
-                    'id',
-                    'date_create',
-                    'status',
-                ]) . ' WHERE ' . self::$fields['id'] . ' = :existing_id';
+            $notToUpdateFields = ['id', 'date_create'];
+
+            if (!$allowStatusUpdate) {
+                $notToUpdateFields[] = 'status';
+                $notToUpdateFields[] = 'pending_id';
+            }
+
+            $query = 'UPDATE ' . self::$table . ' ' . $this->buildQuerySet($message, $notToUpdateFields) . ' WHERE ' . self::$fields['id'] . ' = :existing_id';
 
             $this->bind[':existing_id'] = $message->getId();
         }
@@ -163,28 +166,32 @@ abstract class AbstractDatabaseMessageRepository implements MessageRepositoryInt
     /**
      * {@inheritdoc}
      */
-    public function publishUniqueEntityMessage(Message\MessageInterface $message, array $checkedStatuses = [Enumerator\Status::IN_QUEUE])
+    public function publishOrUpdateEntityMessage(Message\MessageInterface $message)
     {
         if (empty($message->getEntityId())) {
-            throw new \LogicException("Can't use publishUniqueEntityMessage if there is not Entity in the message");
+            throw new \LogicException("Can't use publishOrUpdateEntityMessage if there is not Entity in the message");
         }
 
         $filterExisting = new Filter();
         $filterExisting
             ->setEntityId($message->getEntityId())
-            ->setStatuses($checkedStatuses)
-            ;
-
+            ->setTopic($message->getTopic())
+        ;
         $existingMessage = $this->getMessage($filterExisting);
 
-        if ($existingMessage instanceof Message\MessageInterface) { // Existing message
+        if ($existingMessage instanceof Message\MessageInterface) {
+            // Update message using existing date when needed
+            $now = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
+
             $message
-                ->setId($existingMessage->getId())                                              // We update the existing message
-                ->setPriority(min($message->getPriority(), $existingMessage->getPriority()))    // We keep the highest priority (ie lowest value)
+                ->setId($existingMessage->getId())
+                ->setStatus(Enumerator\Status::IN_QUEUE)
+                ->setPriority(min($message->getPriority(), $existingMessage->getPriority())) // We keep the highest priority (ie lowest value)
+                ->setDateUpdate($now->format('Y-m-d H:i:s'))
             ;
         }
 
-        return $this->publishMessage($message);
+        return $this->publishMessage($message, true);
     }
 
     /**
@@ -431,13 +438,17 @@ abstract class AbstractDatabaseMessageRepository implements MessageRepositoryInt
                 continue;
             }
 
-            if (empty($value)) {
+            if (empty($value) && $value !== 0) { // int(0) should not be seen as empty
                 continue;
             }
 
             $field                    = self::$fields[$name];
             $set[]                    = "${field} = :${field}";
             $this->bind[':' . $field] = $value;
+        }
+
+        if (!in_array('pending_id', $excludeFields)) { // Reset pending_id if not excluded
+            $set[] = self::$fields['pending_id'] . ' = NULL';
         }
 
         if (empty($set)) {

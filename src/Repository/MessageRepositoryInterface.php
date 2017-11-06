@@ -84,19 +84,19 @@ interface MessageRepositoryInterface
      * Publish message in queue.
      *
      * @param  MessageInterface $message
+     * @param  bool $allowStatusUpdate Should status of messages be change on update or not (default false)
      * @return $this
      */
-    public function publishMessage(MessageInterface $message);
+    public function publishMessage(MessageInterface $message, $allowStatusUpdate = false);
 
     /**
-     * Publish message after checking there is not already a message for the same entity_id
-     *  Note: if the new message has a higher priority, existing message is updated
+     * Publish message, or update if there is already a message for the same entity_id in queue
+     *  Check Client::publishOrUpdateEntityMessage documentation for important notes about usage
      *
      * @param MessageInterface $message
-     * @param array $checkedStatuses list of statuses to check (default: only IN_QUEUE messages)
      * @return mixed
      */
-    public function publishUniqueEntityMessage(MessageInterface $message, array $checkedStatuses = [Status::IN_QUEUE]);
+    public function publishOrUpdateEntityMessage(MessageInterface $message);
 
     /**
      * Clean pending message with date update above given interval.

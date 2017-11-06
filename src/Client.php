@@ -9,6 +9,7 @@
 
 namespace PhpMqdb;
 
+use PhpMqdb\Enumerator\Status;
 use PhpMqdb\Repository\MessageRepositoryInterface;
 use PhpMqdb\Message;
 
@@ -103,6 +104,22 @@ class Client
     public function publish(Message\MessageInterface $message)
     {
         $this->messageRepository->publishMessage($message);
+
+        return $this;
+    }
+
+    /**
+     * Publish message, or update if there is already a message for the same entity_id in queue
+     *  Note 1: doesn't ensure there will never be duplicate messages (only to be used for performance when worker can be slow)
+     *  Note 2: priority of the message will be the highest between existing and new message
+     *  Note 3: message content is overwritten (should not be used when contents may be different)
+     *
+     * @param  Message\MessageInterface $message
+     * @return $this
+     */
+    public function publishOrUpdateEntityMessage(Message\MessageInterface $message)
+    {
+        $this->messageRepository->publishOrUpdateEntityMessage($message);
 
         return $this;
     }
