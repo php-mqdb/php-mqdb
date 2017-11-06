@@ -207,6 +207,8 @@ class Filter
      */
     public function setStatuses(array $statuses)
     {
+        $this->statuses = [];
+
         foreach ($statuses as $status) {
             $status = (int) $status;
 
@@ -234,6 +236,8 @@ class Filter
      */
     public function setPriorities(array $priorities)
     {
+        $this->priorities = [];
+
         foreach ($priorities as $priority) {
             $priority = (int) $priority;
 
