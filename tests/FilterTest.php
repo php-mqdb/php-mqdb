@@ -40,7 +40,7 @@ class FilterTest extends TestCase
      *
      * @dataProvider invalidTopicsDataProvider
      * @expectedException \RuntimeException
-     * @expectedExceptionMessage Topic filter must contain only alphanums, "." & "*" characters!
+     * @expectedExceptionMessage Topic filter must contain only alphanums, ".", "_" & "*" characters!
      */
     public function testInvalidTopicThatThrowAnException($topic)
     {
@@ -237,6 +237,9 @@ class FilterTest extends TestCase
             ['topic.subtopic.subsubtopic'],
             ['topic.subtopic.*'],
             ['topic.subtopic.subsubtopic.*'],
+            ['topic.sub_topic.*'],
+            ['other_topic'],
+            ['other_topic.sub_topic.*'],
         ];
     }
 
@@ -248,7 +251,6 @@ class FilterTest extends TestCase
     public function invalidTopicsDataProvider()
     {
         return [
-            ['topic.subt_opic*'],
             ['topic.subtopic.'],
             ['topic.subtopic*'],
             ['topic.subto*pic'],
