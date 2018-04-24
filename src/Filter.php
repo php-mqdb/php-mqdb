@@ -270,8 +270,8 @@ class Filter
             throw new \RuntimeException('Topic filter given cannot be empty!');
         }
 
-        if (!(bool) preg_match('`^([a-z0-9]+\.)*([a-z0-9]+|\*{1})$`', $topic)) {
-            throw new \RuntimeException('Topic filter must contain only alphanums, "." & "*" characters!');
+        if (!(bool) preg_match('`^([a-z0-9_]+\.)*([a-z0-9_]+|\*{1})$`', $topic)) {
+            throw new \RuntimeException('Topic filter must contain only alphanums, ".", "_" & "*" characters!');
         }
 
         $this->topic = $topic;
