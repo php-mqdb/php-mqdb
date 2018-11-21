@@ -33,7 +33,7 @@ abstract class AbstractDatabaseMessageRepository implements MessageRepositoryInt
     /** @var string $table */
     private static $table = 'message_queue';
 
-    /** @var array $fields */
+    /** @var string[] $fields */
     private static $fields = [
         'id'                => 'message_id',
         'status'            => 'message_status',
@@ -180,15 +180,7 @@ abstract class AbstractDatabaseMessageRepository implements MessageRepositoryInt
         $existingMessage = $this->getMessage($filterExisting);
 
         if ($existingMessage instanceof Message\MessageInterface) {
-            // Update message using existing date when needed
-            $now = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
-
-            $message
-                ->setId($existingMessage->getId())
-                ->setStatus(Enumerator\Status::IN_QUEUE)
-                ->setPriority(min($message->getPriority(), $existingMessage->getPriority())) // We keep the highest priority (ie lowest value)
-                ->setDateUpdate($now->format('Y-m-d H:i:s'))
-            ;
+            $this->mergeMessages($existingMessage, $message);
         }
 
         return $this->publishMessage($message, true);
@@ -288,6 +280,49 @@ abstract class AbstractDatabaseMessageRepository implements MessageRepositoryInt
     }
 
     /**
+     * @param Message\MessageInterface $existingMessage
+     * @param Message\MessageInterface $message
+     * @return void
+     * @throws \Exception
+     */
+    protected function mergeMessages(Message\MessageInterface $existingMessage, Message\MessageInterface $message)
+    {
+        // Update message using existing date when needed
+        $now = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
+
+        $message
+            ->setId($existingMessage->getId())
+            ->setStatus(Enumerator\Status::IN_QUEUE)
+            ->setDateCreate($existingMessage->getDateCreate())
+            ->setDateAvailability($existingMessage->getDateAvailability()) // Keep previous availability
+            ->setPriority(min($message->getPriority(), $existingMessage->getPriority())) // We keep the highest priority (ie lowest value)
+            ->setDateUpdate($now->format('Y-m-d H:i:s'))
+        ;
+    }
+
+    /**
+     * @param string $type Specify type if it is needed to override in specific case.
+     * @return array
+     */
+    protected function getOrder($type)
+    {
+        return [
+            $this->getField('priority')          => 'ASC',
+            $this->getField('date_availability') => 'ASC',
+            $this->getField('date_create')       => 'ASC',
+        ];
+    }
+
+    /**
+     * @param string $name
+     * @return string
+     */
+    protected function getField($name)
+    {
+        return self::$fields[$name];
+    }
+
+    /**
      * Set message factory class.
      *
      * @param  string $classFactory
@@ -334,11 +369,7 @@ abstract class AbstractDatabaseMessageRepository implements MessageRepositoryInt
     private function buildQueryGet(Filter $filter, $pendingId = null)
     {
         $fields = empty($pendingId) ? self::$fields['id'] : implode(', ', self::$fields);
-        $order  = [
-            self::$fields['priority']          => 'ASC',
-            self::$fields['date_availability'] => 'ASC',
-            self::$fields['date_create']       => 'ASC',
-        ];
+        $order  = $this->getOrder('get');
 
         $query = 'SELECT ' . $fields .
             ' FROM ' . self::$table . ' ' .
@@ -369,11 +400,7 @@ abstract class AbstractDatabaseMessageRepository implements MessageRepositoryInt
      */
     private function buildQueryProtect(Filter $filter, $pendingId = null)
     {
-        $order  = [
-            self::$fields['priority']          => 'ASC',
-            self::$fields['date_availability'] => 'ASC',
-            self::$fields['date_create']       => 'ASC',
-        ];
+        $order = $this->getOrder('protect');
 
         $query = 'UPDATE ' . self::$table .
             ' SET ' . self::$fields['pending_id'] . ' = :new_pending_id, ' . self::$fields['status'] . ' = :new_status ' .
