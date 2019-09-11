@@ -1,6 +1,6 @@
-<?php
+<?php declare(strict_types=1);
 
-/**
+/*
  * Copyright Romain Cottard
  *
  * For the full copyright and license information, please view the LICENSE
@@ -67,7 +67,7 @@ class Filter
      *
      * @return int
      */
-    public function getOffset()
+    public function getOffset(): int
     {
         return $this->offset;
     }
@@ -77,7 +77,7 @@ class Filter
      *
      * @return int
      */
-    public function getLimit()
+    public function getLimit(): int
     {
         return $this->limit;
     }
@@ -87,7 +87,7 @@ class Filter
      *
      * @return int[]
      */
-    public function getPriorities()
+    public function getPriorities(): array
     {
         return $this->priorities;
     }
@@ -97,7 +97,7 @@ class Filter
      *
      * @return int[]
      */
-    public function getStatuses()
+    public function getStatuses(): array
     {
         return $this->statuses;
     }
@@ -107,7 +107,7 @@ class Filter
      *
      * @return string
      */
-    public function getTopic()
+    public function getTopic(): string
     {
         return $this->topic;
     }
@@ -117,7 +117,7 @@ class Filter
      *
      * @return string
      */
-    public function getDateTimeCurrent()
+    public function getDateTimeCurrent(): string
     {
         return $this->dateTimeCurrent;
     }
@@ -127,7 +127,7 @@ class Filter
      *
      * @return string
      */
-    public function getDateTimeAvailability()
+    public function getDateTimeAvailability(): ?string
     {
         return $this->dateTimeAvailability;
     }
@@ -137,7 +137,7 @@ class Filter
      *
      * @return string
      */
-    public function getDateTimeExpiration()
+    public function getDateTimeExpiration(): ?string
     {
         return $this->dateTimeExpiration;
     }
@@ -145,9 +145,9 @@ class Filter
     /**
      * Return entity id.
      *
-     * @return string
+     * @return string|null
      */
-    public function getEntityId()
+    public function getEntityId(): ?string
     {
         return $this->entityId;
     }
@@ -160,7 +160,7 @@ class Filter
      * @throws \UnderflowException
      * @throws \OverflowException
      */
-    public function setLimit($limit)
+    public function setLimit(int $limit): self
     {
         $limit = (int) $limit;
 
@@ -184,7 +184,7 @@ class Filter
      * @return $this
      * @throws \UnderflowException
      */
-    public function setOffset($offset)
+    public function setOffset(int $offset): self
     {
         $offset = (int) $offset;
 
@@ -205,7 +205,7 @@ class Filter
      * @throws \UnderflowException
      * @throws \OverflowException
      */
-    public function setStatuses(array $statuses)
+    public function setStatuses(array $statuses): self
     {
         $this->statuses = [];
 
@@ -234,7 +234,7 @@ class Filter
      * @throws \UnderflowException
      * @throws \OverflowException
      */
-    public function setPriorities(array $priorities)
+    public function setPriorities(array $priorities): self
     {
         $this->priorities = [];
 
@@ -262,7 +262,7 @@ class Filter
      * @return $this
      * @throws \RuntimeException
      */
-    public function setTopic($topic)
+    public function setTopic(string $topic): self
     {
         $topic = (string) $topic;
 
@@ -285,7 +285,7 @@ class Filter
      * @param  string $date Format: Y-m-d H:i:s
      * @return $this
      */
-    public function setDateTimeCurrent($date)
+    public function setDateTimeCurrent(string $date): self
     {
         $date = \DateTimeImmutable::createFromFormat('Y-m-d H:i:s', (string) $date, new \DateTimeZone('UTC'));
 
@@ -304,7 +304,7 @@ class Filter
      * @param  string $date Format: Y-m-d H:i:s
      * @return $this
      */
-    public function setDateTimeAvailability($date)
+    public function setDateTimeAvailability(string $date): self
     {
         $date = \DateTimeImmutable::createFromFormat('Y-m-d H:i:s', (string) $date, new \DateTimeZone('UTC'));
 
@@ -322,8 +322,9 @@ class Filter
      *
      * @param  string $date Format: Y-m-d H:i:s
      * @return $this
+     * @throws \Exception
      */
-    public function setDateTimeExpiration($date)
+    public function setDateTimeExpiration(string $date): self
     {
         $utcTimezone = new \DateTimeZone('UTC');
         $date        = \DateTimeImmutable::createFromFormat('Y-m-d H:i:s', (string) $date, $utcTimezone);
@@ -348,7 +349,7 @@ class Filter
      * @param  int $limit
      * @return $this
      */
-    private function setMaxLimit($limit)
+    private function setMaxLimit(int $limit): self
     {
         $limit = (int) $limit;
 
@@ -364,10 +365,10 @@ class Filter
     /**
      * Set entity id filter.
      *
-     * @param  string $entityId
+     * @param  string|null $entityId
      * @return $this
      */
-    public function setEntityId($entityId)
+    public function setEntityId(?string $entityId): self
     {
         $this->entityId = $entityId;
 

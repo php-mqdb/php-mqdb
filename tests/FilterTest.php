@@ -52,7 +52,7 @@ class FilterTest extends TestCase
      */
     public function testPriorityUnderflowException()
     {
-        (new filter())->setPriorities([0]);
+        (new Filter())->setPriorities([0]);
     }
 
     /**
@@ -60,7 +60,7 @@ class FilterTest extends TestCase
      */
     public function testPriorityOverflowException()
     {
-        (new filter())->setPriorities([6]);
+        (new Filter())->setPriorities([6]);
     }
 
     /**
@@ -68,7 +68,7 @@ class FilterTest extends TestCase
      */
     public function testPriorityAllowedValue()
     {
-        $filter = new filter();
+        $filter = new Filter();
 
         self::assertEquals([Priority::VERY_LOW], $filter->setPriorities([Priority::VERY_LOW])->getPriorities());
         self::assertEquals([Priority::MEDIUM], $filter->setPriorities([Priority::MEDIUM])->getPriorities());
@@ -81,7 +81,7 @@ class FilterTest extends TestCase
      */
     public function testStatusUnderflowException()
     {
-        (new filter())->setStatuses([-1]);
+        (new Filter())->setStatuses([-1]);
     }
 
     /**
@@ -90,7 +90,7 @@ class FilterTest extends TestCase
      */
     public function testStatusOverflowException()
     {
-        (new filter())->setStatuses([6]);
+        (new Filter())->setStatuses([6]);
     }
 
     /**
@@ -98,7 +98,7 @@ class FilterTest extends TestCase
      */
     public function testStatusAllowedValue()
     {
-        $filter = new filter();
+        $filter = new Filter();
 
         self::assertEquals([Status::IN_QUEUE], $filter->setStatuses([Status::IN_QUEUE])->getStatuses());
         self::assertEquals([Status::ACK_PENDING], $filter->setStatuses([Status::ACK_PENDING])->getStatuses());
@@ -112,7 +112,7 @@ class FilterTest extends TestCase
      */
     public function testOffsetUnderflowException()
     {
-        (new filter())->setOffset(-1);
+        (new Filter())->setOffset(-1);
     }
 
     /**
@@ -120,7 +120,7 @@ class FilterTest extends TestCase
      */
     public function testOffsetAllowedValue()
     {
-        $filter = new filter();
+        $filter = new Filter();
 
         self::assertEquals(0, $filter->setOffset(0)->getOffset());
         self::assertEquals(1000, $filter->setOffset(1000)->getOffset());
@@ -128,50 +128,58 @@ class FilterTest extends TestCase
     }
 
     /**
+     * @return void
+     * @throws \Exception
      * @expectedException \RuntimeException
      */
     public function testInvalidExpirationDateTime()
     {
         $tomorrow = (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->add(new \DateInterval('P1D'));
-        (new filter())->setDateTimeExpiration($tomorrow->format('Y-m-d'));
+        (new Filter())->setDateTimeExpiration($tomorrow->format('Y-m-d'));
     }
 
     /**
+     * @return void
+     * @throws \Exception
      * @expectedException \UnderflowException
      */
     public function testExpirationDateTimeIsPriorToCurrentDateTime()
     {
         $yesterday = (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->sub(new \DateInterval('P1D'));
-        (new filter())->setDateTimeExpiration($yesterday->format('Y-m-d H:i:s'));
+        (new Filter())->setDateTimeExpiration($yesterday->format('Y-m-d H:i:s'));
     }
 
     /**
      * @return void
+     * @throws \Exception
      */
     public function testExpirationDateTimeIsValid()
     {
         $tomorrow = (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->add(new \DateInterval('P1D'));
-        $filter = (new filter())->setDateTimeExpiration($tomorrow->format('Y-m-d H:i:s'));
+        $filter = (new Filter())->setDateTimeExpiration($tomorrow->format('Y-m-d H:i:s'));
 
         self::assertEquals($tomorrow->format('Y-m-d H:i:s'), $filter->getDateTimeExpiration());
     }
 
     /**
+     * @return void
+     * @throws \Exception
      * @expectedException \RuntimeException
      */
     public function testInvalidAvailabilityDateTime()
     {
         $tomorrow = (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->add(new \DateInterval('P1D'));
-        (new filter())->setDateTimeAvailability($tomorrow->format('Y-m-d'));
+        (new Filter())->setDateTimeAvailability($tomorrow->format('Y-m-d'));
     }
 
     /**
      * @return void
+     * @throws \Exception
      */
     public function testAvailabilityDateTimeIsValid()
     {
         $tomorrow = (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->add(new \DateInterval('P1D'));
-        $filter = (new filter())->setDateTimeAvailability($tomorrow->format('Y-m-d H:i:s'));
+        $filter = (new Filter())->setDateTimeAvailability($tomorrow->format('Y-m-d H:i:s'));
 
         self::assertEquals($tomorrow->format('Y-m-d H:i:s'), $filter->getDateTimeAvailability());
     }
@@ -181,7 +189,7 @@ class FilterTest extends TestCase
      */
     public function testLimitUnderflowException()
     {
-        (new filter())->setLimit(0);
+        (new Filter())->setLimit(0);
     }
 
     /**
@@ -189,7 +197,7 @@ class FilterTest extends TestCase
      */
     public function testLimitOverflowException()
     {
-        (new filter())->setLimit(1001); // Default limit is 1000
+        (new Filter())->setLimit(1001); // Default limit is 1000
     }
 
     /**
@@ -197,7 +205,7 @@ class FilterTest extends TestCase
      */
     public function testLimitAllowedValue()
     {
-        $filter = new filter();
+        $filter = new Filter();
 
         self::assertEquals(1, $filter->setLimit(1)->getLimit());
         self::assertEquals(50, $filter->setLimit(50)->getLimit());
@@ -209,7 +217,7 @@ class FilterTest extends TestCase
      */
     public function testLimitAllowedValueWithIncreasedDefaultMaxLimit()
     {
-        $filter = new filter(10000);
+        $filter = new Filter(10000);
 
         self::assertEquals(5000, $filter->setLimit(5000)->getLimit());
         self::assertEquals(10000, $filter->setLimit(10000)->getLimit());
@@ -220,7 +228,7 @@ class FilterTest extends TestCase
      */
     public function testUnderflowMaxLimit()
     {
-        (new filter(0));
+        (new Filter(0));
     }
 
     /**

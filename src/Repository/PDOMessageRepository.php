@@ -1,6 +1,6 @@
-<?php
+<?php declare(strict_types=1);
 
-/**
+/*
  * Copyright Romain Cottard
  *
  * For the full copyright and license information, please view the LICENSE
@@ -9,7 +9,7 @@
 
 namespace PhpMqdb\Repository;
 
-use PhpMqdb\Message;
+use PhpMqdb\Query\QueryBuilder;
 
 /**
  * Interface for Message Repository
@@ -25,27 +25,21 @@ class PDOMessageRepository extends AbstractDatabaseMessageRepository
      * PDOMessageRepository constructor.
      *
      * @param \PDO $connection
-     * @param string $classFactory
      */
-    public function __construct(\PDO $connection, $classFactory = Message\MessageFactory::class)
+    public function __construct(\PDO $connection)
     {
         $this->connection = $connection;
-        $this->setClassMessageFactory($classFactory);
     }
 
     /**
-     * @param string $query
+     * @param QueryBuilder $queryBuilder
      * @return \PDOStatement
      * @throws \Exception
      */
-    protected function executeQuery($query)
+    protected function executeQuery(QueryBuilder $queryBuilder)
     {
-        try {
-            $stmt = $this->connection->prepare($query);
-            $stmt->execute($this->bind);
-        } finally {
-            $this->cleanQuery();
-        }
+        $stmt = $this->connection->prepare($queryBuilder->getQuery());
+        $stmt->execute($queryBuilder->getBind());
 
         return $stmt;
     }

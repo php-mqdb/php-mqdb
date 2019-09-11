@@ -1,6 +1,6 @@
-<?php
+<?php declare(strict_types=1);
 
-/**
+/*
  * Copyright Romain Cottard
  *
  * For the full copyright and license information, please view the LICENSE
@@ -9,10 +9,15 @@
 
 namespace PhpMqdb\Repository;
 
+use Doctrine\DBAL\Driver\Statement;
+use PhpMqdb\Enumerator;
 use PhpMqdb\Exception\EmptySetValuesException;
+use PhpMqdb\Exception\PhpMqdbConfigurationException;
 use PhpMqdb\Filter;
 use PhpMqdb\Message;
-use PhpMqdb\Enumerator;
+use PhpMqdb\Message\MessageInterface;
+use PhpMqdb\Query\QueryBuilder;
+use PhpMqdb\Query\QueryBuilderFactory;
 
 /**
  * Interface for Message Repository
@@ -21,48 +26,69 @@ use PhpMqdb\Enumerator;
  */
 abstract class AbstractDatabaseMessageRepository implements MessageRepositoryInterface
 {
-    /** @var array $bind */
-    protected $bind = [];
+    /** @var Message\MessageFactoryInterface $messageFactory */
+    private $messageFactory;
 
-    /** @var string $classFactory */
-    private $classFactory = Message\MessageFactory::class;
-
-    /** @var array $where */
-    private $where = [];
-
-    /** @var string $table */
-    private static $table = 'message_queue';
-
-    /** @var string[] $fields */
-    private static $fields = [
-        'id'                => 'message_id',
-        'status'            => 'message_status',
-        'priority'          => 'message_priority',
-        'topic'             => 'message_topic',
-        'content'           => 'message_content',
-        'content_type'      => 'message_content_type',
-        'entity_id'         => 'message_entity_id',
-        'date_expiration'   => 'message_date_expiration',
-        'date_availability' => 'message_date_availability',
-        'pending_id'        => 'message_pending_id',
-        'date_create'       => 'message_date_create',
-        'date_update'       => 'message_date_update',
-    ];
+    /** @var QueryBuilderFactory $queryBuilderFactory */
+    private $queryBuilderFactory;
 
     /**
-     * {@inheritdoc}
+     * Run a query
+     *
+     * @param QueryBuilder $queryBuilder
+     * @return \PDOStatement|Statement
      */
-    public function ack($id)
+    abstract protected function executeQuery(QueryBuilder $queryBuilder);
+
+    /**
+     * AbstractDatabaseMessageRepository constructor.
+     *
+     * @param QueryBuilderFactory $queryBuilderFactory
+     */
+    public function setQueryBuilderFactory(QueryBuilderFactory $queryBuilderFactory)
     {
-        $this->executeQuery($this->buildQueryUpdate($id, Enumerator\Status::ACK_RECEIVED));
+        $this->queryBuilderFactory = $queryBuilderFactory;
+    }
+
+    /**
+     * Set message factory instance.
+     *
+     * @param Message\MessageFactoryInterface $messageFactory
+     * @return $this
+     * @throws \LogicException
+     */
+    public function setMessageFactory(Message\MessageFactoryInterface $messageFactory): MessageRepositoryInterface
+    {
+        $this->messageFactory = $messageFactory;
 
         return $this;
     }
 
     /**
-     * {@inheritdoc}
+     * Send acknowledgement to the server.
+     *
+     * @param string $id
+     * @return MessageRepositoryInterface
+     * @throws \Exception
      */
-    public function nack($id, $requeue = true)
+    public function ack(string $id): MessageRepositoryInterface
+    {
+        $queryBuilder = $this->getQueryBuilder();
+
+        $this->executeQuery($queryBuilder->buildQueryUpdate($id, Enumerator\Status::ACK_RECEIVED));
+
+        return $this;
+    }
+
+    /**
+     * Send non-acknowledgement to the server.
+     *
+     * @param string $id
+     * @param bool $requeue
+     * @return $this
+     * @throws \Exception
+     */
+    public function nack(string $id, bool $requeue = true): MessageRepositoryInterface
     {
         $status = Enumerator\Status::NACK_RECEIVED;
 
@@ -70,53 +96,49 @@ abstract class AbstractDatabaseMessageRepository implements MessageRepositoryInt
             $status = Enumerator\Status::IN_QUEUE;
         }
 
-        $this->executeQuery($this->buildQueryUpdate($id, $status));
+        $queryBuilder = $this->getQueryBuilder();
+
+        $this->executeQuery($queryBuilder->buildQueryUpdate($id, $status));
 
         return $this;
     }
 
     /**
-     * {@inheritdoc}
+     * Get message based on given context.
+     *
+     * @param Filter $filter
+     * @return Message\MessageInterface
+     * @throws PhpMqdbConfigurationException
      */
-    public function getMessage(Filter $filter)
+    public function getMessage(Filter $filter): Message\MessageInterface
     {
-        try {
-            //~ override filter limit to 1
-            $filter->setLimit(1);
+        //~ override filter limit to 1
+        $filter->setLimit(1);
 
-            $messages = $this->getMessages($filter);
+        $messages = $this->getMessages($filter);
 
-            return array_pop($messages);
-        } finally {
-            $this->cleanQuery();
-        }
+        return array_pop($messages);
     }
 
     /**
-     * {@inheritdoc}
+     * Get messages based on given context.
+     *
+     * @param Filter $filter
+     * @return Message\MessageInterface[]
+     * @throws PhpMqdbConfigurationException
+     * @throws \Exception
      */
-    public function getMessages(Filter $filter)
+    public function getMessages(Filter $filter): iterable
     {
         $messages = [];
 
-        $query = $this->buildQueryGet($filter, $this->protectMessages($filter));
+        $queryBuilder = $this->getQueryBuilder();
 
-        $stmt = $this->executeQuery($query);
+        $stmt = $this->executeQuery($queryBuilder->buildQueryGet($filter, $this->protectMessages($filter)));
 
         while (null != ($row = $stmt->fetch(\PDO::FETCH_OBJ))) {
 
-            $message = call_user_func_array([$this->classFactory, 'create'], [$row->{self::$fields['content_type']}]);
-            $message->setId($row->{self::$fields['id']})
-                ->setStatus($row->{self::$fields['status']})
-                ->setPriority($row->{self::$fields['priority']})
-                ->setTopic($row->{self::$fields['topic']})
-                ->setContent($row->{self::$fields['content']})
-                ->setContentType($row->{self::$fields['content_type']})
-                ->setEntityId($row->{self::$fields['entity_id']})
-                ->setDateExpiration($row->{self::$fields['date_expiration']})
-                ->setDateAvailability($row->{self::$fields['date_availability']})
-                ->setDateCreate($row->{self::$fields['date_create']})
-                ->setDateUpdate($row->{self::$fields['date_update']});
+            $message = $this->messageFactory->create($row);
 
             $messages[] = $message;
         }
@@ -125,56 +147,56 @@ abstract class AbstractDatabaseMessageRepository implements MessageRepositoryInt
     }
 
     /**
-     * {@inheritdoc}
+     * @param Filter $filter
+     * @return int
+     * @throws PhpMqdbConfigurationException
      */
-    public function countMessages(Filter $filter)
+    public function countMessages(Filter $filter): int
     {
-        $query = $this->buildQueryCount($filter);
+        $stmt = $this->executeQuery($this->getQueryBuilder()->buildQueryCount($filter));
 
-        $stmt = $this->executeQuery($query);
-
-        $count = $stmt->fetchColumn();
-
-        return $count;
+        return (int) $stmt->fetchColumn();
     }
 
     /**
-     * {@inheritdoc}
+     * Publish message in queue.
+     *
+     * @param  MessageInterface $message
+     * @param  bool $allowStatusUpdate Should status of messages be change on update or not (default false)
+     * @return MessageRepositoryInterface
+     * @throws EmptySetValuesException
+     * @throws PhpMqdbConfigurationException
      */
-    public function publishMessage(Message\MessageInterface $message, $allowStatusUpdate = false)
+    public function publishMessage(Message\MessageInterface $message, bool $allowStatusUpdate = false): MessageRepositoryInterface
     {
+        $queryBuilder = $this->getQueryBuilder();
+
+        $isNew = false;
         if (empty($message->getId())) {
             $message->setId($this->generateId(4));
-            $query = 'INSERT INTO ' . self::$table . ' ' . $this->buildQuerySet($message);
-        } else {
-            $notToUpdateFields = ['id', 'date_create'];
-
-            if (!$allowStatusUpdate) {
-                $notToUpdateFields[] = 'status';
-                $notToUpdateFields[] = 'pending_id';
-            }
-
-            $query = 'UPDATE ' . self::$table . ' ' . $this->buildQuerySet($message, $notToUpdateFields) . ' WHERE ' . self::$fields['id'] . ' = :existing_id';
-
-            $this->bind[':existing_id'] = $message->getId();
+            $isNew = true;
         }
-        $this->executeQuery($query);
+
+        $this->executeQuery($queryBuilder->buildQueryPublish($message, $isNew, $allowStatusUpdate));
 
         return $this;
     }
 
     /**
-     * {@inheritdoc}
+     * @param MessageInterface $message
+     * @return MessageRepositoryInterface
+     * @throws EmptySetValuesException
+     * @throws PhpMqdbConfigurationException
+     * @throws \Exception
      */
-    public function publishOrUpdateEntityMessage(Message\MessageInterface $message)
+    public function publishOrUpdateEntityMessage(Message\MessageInterface $message): MessageRepositoryInterface
     {
         if (empty($message->getEntityId())) {
             throw new \LogicException("Can't use publishOrUpdateEntityMessage if there is not Entity in the message");
         }
 
         $filterExisting = new Filter();
-        $filterExisting
-            ->setEntityId($message->getEntityId())
+        $filterExisting->setEntityId($message->getEntityId())
             ->setTopic($message->getTopic())
         ;
         $existingMessage = $this->getMessage($filterExisting);
@@ -187,159 +209,66 @@ abstract class AbstractDatabaseMessageRepository implements MessageRepositoryInt
     }
 
     /**
-     * {@inheritdoc}
-     */
-    public function cleanMessages(\DateInterval $interval, $deleteBitmask = self::DELETE_SAFE)
-    {
-        $status = [];
-
-        if (($deleteBitmask & self::DELETE_ACK_RECEIVED) === self::DELETE_ACK_RECEIVED) {
-            $status[':status_ack'] = Enumerator\Status::ACK_RECEIVED;
-        }
-
-        if (($deleteBitmask & self::DELETE_NACK_RECEIVED) === self::DELETE_NACK_RECEIVED) {
-            $status[':status_nack'] = Enumerator\Status::NACK_RECEIVED;
-        }
-
-        if (($deleteBitmask & self::DELETE_ACK_NOT_RECEIVED) === self::DELETE_ACK_NOT_RECEIVED) {
-            $status[':status_ackn'] = Enumerator\Status::ACK_NOT_RECEIVED;
-        }
-
-        if (($deleteBitmask & self::DELETE_ACK_PENDING) === self::DELETE_ACK_PENDING) {
-            $status[':status_ackp'] = Enumerator\Status::ACK_PENDING;
-        }
-
-        $date = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
-        $date = $date->sub($interval);
-
-        $query = 'DELETE FROM ' . self::$table . ' WHERE ' . self::$fields['status'] . ' IN ( ' . implode(', ', array_keys($status)) . ') AND ' . self::$fields['date_update'] . ' <= :date_update AND ' . self::$fields['date_update'] . ' IS NOT NULL';
-
-        $this->bind                 = $status;
-        $this->bind[':date_update'] = $date->format('Y-m-d H:i:s');
-
-        $this->executeQuery($query);
-
-        return $this;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function cleanPendingMessages(\DateInterval $interval)
-    {
-        $date = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
-        $date = $date->sub($interval);
-
-        $query = 'UPDATE ' . self::$table . ' SET ' . self::$fields['status'] . ' = :new_message_status WHERE ' . self::$fields['status'] . ' = :message_status AND ' . self::$fields['date_update'] . ' <= :date_update AND ' . self::$fields['date_update'] . ' IS NOT NULL';
-
-        $this->bind[':new_message_status'] = Enumerator\Status::ACK_NOT_RECEIVED;
-        $this->bind[':message_status']     = Enumerator\Status::ACK_PENDING;
-        $this->bind[':date_update']        = $date->format('Y-m-d H:i:s');
-
-        $this->executeQuery($query);
-
-        return $this;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function setFields(array $fields)
-    {
-        foreach ($fields as $key => $field) {
-            if (!isset(self::$fields[$key])) {
-                continue;
-            }
-
-            if ((bool) preg_match('`[^a-zA-Z0-9_-]`', $field)) {
-                throw new \LogicException('Invalid field name!');
-            }
-
-            self::$fields[$key] = $field;
-        }
-
-        return $this;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function setTable($table)
-    {
-        if (empty($table)) {
-            throw new EmptySetValuesException('Empty table name');
-        }
-
-        if ((bool) preg_match('`[^a-zA-Z0-9_-]`', $table)) {
-            throw new \LogicException('Invalid table name!');
-        }
-
-        self::$table = $table;
-
-        return $this;
-    }
-
-    /**
-     * @param Message\MessageInterface $existingMessage
-     * @param Message\MessageInterface $message
-     * @return void
+     * @param \DateInterval $interval
+     * @param int $deleteBitmask
+     * @return MessageRepositoryInterface
      * @throws \Exception
      */
-    protected function mergeMessages(Message\MessageInterface $existingMessage, Message\MessageInterface $message)
+    public function cleanMessages(
+        \DateInterval $interval,
+        int $deleteBitmask = self::DELETE_SAFE
+    ): MessageRepositoryInterface {
+
+        $date = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
+        $date = $date->sub($interval);
+
+        $queryBuilder = $this->getQueryBuilder();
+
+        $this->executeQuery($queryBuilder->buildQueryClean($deleteBitmask, $date->format('Y-m-d H:i:s')));
+
+        return $this;
+    }
+
+    /**
+     * @param \DateInterval $interval
+     * @return MessageRepositoryInterface
+     * @throws \Exception
+     */
+    public function cleanPendingMessages(\DateInterval $interval): MessageRepositoryInterface
     {
+        $date = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
+        $date = $date->sub($interval);
+
+
+        $queryBuilder = $this->getQueryBuilder();
+
+        $this->executeQuery($queryBuilder->buildQueryCleanPending($date->format('Y-m-d H:i:s')));
+
+        return $this;
+    }
+
+    /**
+     * @param MessageInterface $existingMessage
+     * @param MessageInterface $message
+     * @return MessageRepositoryInterface
+     * @throws \Exception
+     */
+    protected function mergeMessages(
+        Message\MessageInterface $existingMessage,
+        Message\MessageInterface $message
+    ): MessageRepositoryInterface {
         // Update message using existing date when needed
         $now = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
 
-        $message
-            ->setId($existingMessage->getId())
+        $message->setId($existingMessage->getId())
             ->setStatus(Enumerator\Status::IN_QUEUE)
             ->setDateCreate($existingMessage->getDateCreate())
             ->setDateAvailability($existingMessage->getDateAvailability()) // Keep previous availability
-            ->setPriority(min($message->getPriority(), $existingMessage->getPriority())) // We keep the highest priority (ie lowest value)
+            ->setPriority(
+                min($message->getPriority(), $existingMessage->getPriority())
+            ) // We keep the highest priority (ie lowest value)
             ->setDateUpdate($now->format('Y-m-d H:i:s'))
         ;
-    }
-
-    /**
-     * @param string $type Specify type if it is needed to override in specific case.
-     * @return array
-     */
-    protected function getOrder($type)
-    {
-        return [
-            $this->getField('priority')          => 'ASC',
-            $this->getField('date_availability') => 'ASC',
-            $this->getField('date_create')       => 'ASC',
-        ];
-    }
-
-    /**
-     * @param string $name
-     * @return string
-     */
-    protected function getField($name)
-    {
-        return self::$fields[$name];
-    }
-
-    /**
-     * Set message factory class.
-     *
-     * @param  string $classFactory
-     * @return $this
-     * @throws \LogicException
-     */
-    protected function setClassMessageFactory($classFactory)
-    {
-        if (!class_exists($classFactory)) {
-            throw new \LogicException('Factory class does not exist!');
-        }
-
-        if (!method_exists($classFactory, 'create')) {
-            throw new \LogicException('Factory must have a "create()" method');
-        }
-
-        $this->classFactory = $classFactory;
 
         return $this;
     }
@@ -347,278 +276,26 @@ abstract class AbstractDatabaseMessageRepository implements MessageRepositoryInt
     /**
      * Protect message from double consuming in parallels scripts.
      *
-     * @param  Filter $filter
+     * @param Filter $filter
      * @return string
+     * @throws PhpMqdbConfigurationException
      */
-    private function protectMessages(Filter $filter)
+    private function protectMessages(Filter $filter): string
     {
         $pendingId = $this->generateId(1);
 
-        $this->executeQuery($this->buildQueryProtect($filter, $pendingId));
+        $this->executeQuery($this->getQueryBuilder()->buildQueryProtect($filter, $pendingId));
 
         return $pendingId;
     }
 
     /**
-     * Build query to get a message.
-     *
-     * @param  Filter $filter
-     * @param  string|null $pendingId
-     * @return string
-     */
-    private function buildQueryGet(Filter $filter, $pendingId = null)
-    {
-        $fields = empty($pendingId) ? self::$fields['id'] : implode(', ', self::$fields);
-        $order  = $this->getOrder('get');
-
-        $query = 'SELECT ' . $fields .
-            ' FROM ' . self::$table . ' ' .
-            $this->buildWhere($filter, $pendingId) .
-            $this->buildOrder($order) .
-            $this->buildLimit($filter);
-
-        return $query;
-    }
-
-    /**
-     * @param Filter $filter
-     * @return string
-     */
-    private function buildQueryCount(Filter $filter)
-    {
-        $query = 'SELECT COUNT(' . self::$fields['id'] . ') FROM ' . self::$table . ' ' . $this->buildWhere($filter);
-
-        return $query;
-    }
-
-    /**
-     * Build query to update message(s) before to get it.
-     *
-     * @param  Filter $filter
-     * @param  string $pendingId
-     * @return string
-     */
-    private function buildQueryProtect(Filter $filter, $pendingId = null)
-    {
-        $order = $this->getOrder('protect');
-
-        $query = 'UPDATE ' . self::$table .
-            ' SET ' . self::$fields['pending_id'] . ' = :new_pending_id, ' . self::$fields['status'] . ' = :new_status ' .
-            $this->buildWhere($filter) .
-            $this->buildOrder($order) .
-            $this->buildLimit($filter);
-
-        $this->bind[':new_status']     = Enumerator\Status::ACK_PENDING;
-        $this->bind[':new_pending_id'] = $pendingId;
-
-        return $query;
-    }
-
-    /**
-     * Build query to update message(s) before to get it.
-     *
-     * @param  string $id Message id
-     * @param  int $status Message status
-     * @return string
-     */
-    private function buildQueryUpdate($id, $status)
-    {
-        $query = 'UPDATE ' . self::$table .
-            ' SET ' . self::$fields['status'] . ' = :new_status, ' . self::$fields['date_update'] . ' = :new_date_update, ' . self::$fields['pending_id'] . ' = :new_pending_id' .
-            ' WHERE ' . self::$fields['id'] . ' = :id';
-
-        $this->bind[':new_status']      = (int) $status;
-        $this->bind[':new_date_update'] = (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->format('Y-m-d H:i:s');
-        $this->bind[':new_pending_id']  = null;
-        $this->bind[':id']              = $id;
-
-        return $query;
-    }
-
-    /**
-     * Build query where.
-     *
-     * @param  Message\MessageInterface $message
-     * @param  string[] $excludeFields
-     * @return string
-     * @throws \Exception
-     */
-    private function buildQuerySet(Message\MessageInterface $message, $excludeFields = [])
-    {
-        $methods = [
-            'id'                => $message->getId(),
-            'status'            => $message->getStatus(),
-            'priority'          => $message->getPriority(),
-            'topic'             => $message->getTopic(),
-            'content'           => $message->getContent(),
-            'content_type'      => $message->getContentType(),
-            'entity_id'         => $message->getEntityId(),
-            'date_expiration'   => $message->getDateExpiration(),
-            'date_availability' => $message->getDateAvailability(),
-            'date_create'       => $message->getDateCreate(),
-            'date_update'       => $message->getDateUpdate(),
-        ];
-
-        $set = [];
-        foreach ($methods as $name => $value) {
-            if (in_array($name, $excludeFields)) {
-                continue;
-            }
-
-            if (empty($value) && $value !== 0) { // int(0) should not be seen as empty
-                continue;
-            }
-
-            $field                    = self::$fields[$name];
-            $set[]                    = "${field} = :${field}";
-            $this->bind[':' . $field] = $value;
-        }
-
-        if (!in_array('pending_id', $excludeFields)) { // Reset pending_id if not excluded
-            $set[] = self::$fields['pending_id'] . ' = NULL';
-        }
-
-        if (empty($set)) {
-            throw new EmptySetValuesException('Cannot build SET query part! (no value to set)');
-        }
-
-        return 'SET ' . implode(', ', $set);
-    }
-
-    /**
-     * Build query where.
-     *
-     * @param  Filter $filter
-     * @param  string $pendingId
-     * @return string
-     */
-    private function buildWhere(Filter $filter, $pendingId = null)
-    {
-        //~ If pending id is defined, select on pending id.
-        if (!empty($pendingId)) {
-            $this->addWhere(self::$fields['pending_id'], $pendingId);
-
-            return 'WHERE ' . implode(' AND ', $this->where);
-        }
-
-        $this->addWhere(self::$fields['pending_id'], null);
-
-        if (!empty($filter->getTopic())) {
-            $topic = strtr($filter->getTopic(), '*', '%');
-            $sign  = (strpos($topic, '%') !== false ? 'LIKE' : '=');
-            $this->addWhere(self::$fields['topic'], $topic, $sign);
-        }
-
-        $this->addWhereIn(self::$fields['status'], $filter->getStatuses());
-        $this->addWhereIn(self::$fields['priority'], $filter->getPriorities());
-
-        //~ If have no date time availability set as filter, use current datetime.
-        if (!empty($filter->getDateTimeAvailability())) {
-            $this->addWhere(self::$fields['date_availability'], $filter->getDateTimeAvailability(), '<=', true);
-        } else {
-            $this->addWhere(self::$fields['date_availability'], $filter->getDateTimeCurrent(), '<=', true);
-        }
-
-        //~ If have no date time expiration set as filter, use current datetime.
-        if (!empty($filter->getDateTimeExpiration())) {
-            $this->addWhere(self::$fields['date_expiration'], $filter->getDateTimeExpiration(), '>', true);
-        } else {
-            $this->addWhere(self::$fields['date_expiration'], $filter->getDateTimeCurrent(), '>', true);
-        }
-
-        if ($filter->getEntityId() !== null) { // Not empty as we may want to filter on entityId === ''
-            $this->addWhere(self::$fields['entity_id'], $filter->getEntityId());
-        }
-
-        return 'WHERE ' . implode(' AND ', $this->where);
-    }
-
-    /**
-     * Build query limit.
-     *
-     * @param Filter $filter
-     * @return string
-     */
-    private function buildLimit(Filter $filter)
-    {
-        return 'LIMIT ' . $filter->getLimit();
-    }
-
-    /**
-     * Build query order.
-     *
-     * @param  string[] $order
-     * @return string
-     */
-    private function buildOrder(array $order)
-    {
-        $orderBy = [];
-
-        foreach ($order as $field => $direction) {
-            $orderBy[] = $field . ' ' . $direction;
-        }
-
-        if (empty($orderBy)) {
-            return '';
-        }
-
-        return ' ORDER BY ' . implode(', ', $orderBy) . ' ';
-    }
-
-    /**
-     * @param  string $field
-     * @param  string|int $value
-     * @param  string $sign
-     * @param  bool $orNull
-     * @return $this
-     */
-    private function addWhere($field, $value, $sign = '=', $orNull = false)
-    {
-        if ($value === null) {
-            $this->where[] = "`${field}` IS NULL";
-        } else {
-            $this->where[]            = ($orNull ? '(' : '') . "`${field}` $sign :${field}" . ($orNull ? " OR `${field}` IS NULL)" : '');
-            $this->bind[':' . $field] = $value;
-        }
-
-        return $this;
-    }
-
-    /**
-     * @param  string $field
-     * @param  array $values
-     * @return $this
-     */
-    private function addWhereIn($field, array $values)
-    {
-        if (empty($values)) {
-            return $this;
-        }
-
-        if (!is_array($values)) {
-            throw new \InvalidArgumentException('Values must be an array of value to filter.');
-        }
-
-        $where = [];
-        foreach ($values as $index => $value) {
-            $name = ':' . $field . '_' . $index;
-
-            $this->bind[$name] = $value;
-            $where[]           = $name;
-        }
-
-        $this->where[] = "`${field}` IN (" . implode(', ', $where) . ")";
-
-        return $this;
-    }
-
-    /**
      * Generate unique id. Format is: [0-f]{16}-[0-f]{16}-...
      *
-     * @param  int $nbChunk Number of "chunk" of 8 hexadecimal chars in generated id.
+     * @param int $nbChunk Number of "chunk" of 8 hexadecimal chars in generated id.
      * @return string
      */
-    private function generateId($nbChunk = 4)
+    private function generateId(int $nbChunk = 4): string
     {
         $chunks = [];
         for ($i = 0; $i < $nbChunk; $i++) {
@@ -628,24 +305,8 @@ abstract class AbstractDatabaseMessageRepository implements MessageRepositoryInt
         return implode('-', $chunks);
     }
 
-    /**
-     * Clean query builder values.
-     *
-     * @return $this
-     */
-    protected function cleanQuery()
+    protected function getQueryBuilder(): QueryBuilder
     {
-        $this->where = [];
-        $this->bind  = [];
-
-        return $this;
+        return $this->queryBuilderFactory->getBuilder();
     }
-
-    /**
-     * Run a query
-     *
-     * @param  string $query
-     * @return \PDOStatement|\Doctrine\DBAL\Driver\Statement
-     */
-    abstract protected function executeQuery($query);
 }

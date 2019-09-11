@@ -10,8 +10,11 @@
 namespace PhpMqdb\Examples;
 
 use PhpMqdb\Client;
+use PhpMqdb\Config\TableConfig;
 use PhpMqdb\Message;
 use PhpMqdb\Enumerator;
+use PhpMqdb\Message\MessageFactory;
+use PhpMqdb\Query\QueryBuilderFactory;
 use PhpMqdb\Repository\PDOMessageRepository;
 
 require_once __DIR__ . '/../vendor/autoload.php';
@@ -21,8 +24,17 @@ $dbConf = require_once __DIR__ . '/config.php';
 $connection = new \PDO($dbConf->dsn, $dbConf->user, $dbConf->pass, $dbConf->opts);
 $connection->setAttribute( \PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
 
+//~ Table Config
+$tableConfig = new TableConfig();
+
+//~ Factories
+$messageFactory      = new MessageFactory($tableConfig);
+$queryBuilderFactory = new QueryBuilderFactory($tableConfig);
+
 //~ Repository
 $repository = new PDOMessageRepository($connection);
+$repository->setMessageFactory($messageFactory);
+$repository->setQueryBuilderFactory($queryBuilderFactory);
 
 //~ Client
 $client = new Client($repository);
@@ -30,7 +42,7 @@ $client = new Client($repository);
 $date = new \DateTimeImmutable();
 
 //~ Publish messages
-for($index = 1; $index <= 1000; $index++) {
+for($index = 1; $index <= 200000; $index++) {
     echo 'process ' . $index . "\r";
 
     $interval = new \DateInterval('PT' . rand(0,10) . 'M' . rand(0, 59) . 'S');

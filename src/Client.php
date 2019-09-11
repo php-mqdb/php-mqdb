@@ -9,7 +9,6 @@
 
 namespace PhpMqdb;
 
-use PhpMqdb\Enumerator\Status;
 use PhpMqdb\Repository\MessageRepositoryInterface;
 use PhpMqdb\Message;
 

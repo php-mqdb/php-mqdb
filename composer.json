@@ -18,12 +18,13 @@
   },
 
   "require": {
+    "ext-pdo": "*",
     "doctrine/dbal": "^2.5"
   },
 
   "require-dev": {
     "phpdocumentor/reflection-docblock": "^3.1",
-    "phpunit/phpunit": "^5.0"
+    "phpunit/phpunit": "^7.0"
   }
 
 }
