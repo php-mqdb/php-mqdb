@@ -1,6 +1,6 @@
-<?php
+<?php declare(strict_types=1);
 
-/**
+/*
  * Copyright (c) Romain Cottard
  *
  * For the full copyright and license information, please view the LICENSE
@@ -21,77 +21,77 @@ interface MessageInterface
      *
      * @return string
      */
-    public function getId();
+    public function getId(): string;
 
     /**
      * Get message status.
      *
      * @return int
      */
-    public function getStatus();
+    public function getStatus(): int;
 
     /**
      * Get message priority.
      *
      * @return int
      */
-    public function getPriority();
+    public function getPriority(): int;
 
     /**
      * Get message topic.
      *
      * @return string
      */
-    public function getTopic();
+    public function getTopic(): string;
 
     /**
      * Get message content.
      *
      * @return string
      */
-    public function getContent();
+    public function getContent(): string;
 
     /**
      * Get message content type ('csv', 'json', 'xml', 'text'...)
      *
      * @return string
      */
-    public function getContentType();
+    public function getContentType(): string;
 
     /**
      * Get Entity identifier linked to the message.
      *
      * @return string
      */
-    public function getEntityId();
+    public function getEntityId(): ?string;
 
     /**
      * Get the expiration date of the message.
      *
      * @return string
      */
-    public function getDateExpiration();
+    public function getDateExpiration(): ?string;
 
     /**
      * Get availability date of the message.
      *
      * @return string
      */
-    public function getDateAvailability();
+    public function getDateAvailability(): ?string;
 
     /**
      * Get the creation date of the message.
      *
      * @return string
      */
-    public function getDateCreate();
+    public function getDateCreate(): string;
 
     /**
      * Get the update date of the message.
      *
      * @return string
      */
-    public function getDateUpdate();
+    public function getDateUpdate(): ?string;
 
     /**
      * Set Message Identifier.
@@ -99,7 +99,7 @@ interface MessageInterface
      * @param  string $id
      * @return $this
      */
-    public function setId($id);
+    public function setId(string $id);
 
     /**
      * Set message status.
@@ -113,7 +113,7 @@ interface MessageInterface
      * @return $this
      * @throws \UnderflowException
      */
-    public function setStatus($status);
+    public function setStatus(int $status);
 
     /**
      * Set message priority.
@@ -128,7 +128,7 @@ interface MessageInterface
      * @return $this
      * @throws \UnderflowException
      */
-    public function setPriority($priority);
+    public function setPriority(int $priority);
 
     /**
      * Set message topic.
@@ -136,7 +136,7 @@ interface MessageInterface
      * @param  string $topic
      * @return $this
      */
-    public function setTopic($topic);
+    public function setTopic(string $topic);
 
     /**
      * Set message content.
@@ -144,7 +144,7 @@ interface MessageInterface
      * @param  string $content
      * @return $this
      */
-    public function setContent($content);
+    public function setContent(string $content);
 
     /**
      * Set message content type
@@ -152,31 +152,31 @@ interface MessageInterface
      * @param  string $contentType ('csv', 'json', 'xml', 'text'...)
      * @return $this
      */
-    public function setContentType($contentType);
+    public function setContentType(string $contentType);
 
     /**
      * Set Entity identifier linked to the message.
      *
-     * @param  string $entityId
+     * @param  string|null $entityId
      * @return $this
      */
-    public function setEntityId($entityId);
+    public function setEntityId(?string $entityId);
 
     /**
      * Set the expiration date of the message.
      *
-     * @param  string $dateExpiration
+     * @param  string|null $dateExpiration
      * @return $this
      */
-    public function setDateExpiration($dateExpiration);
+    public function setDateExpiration(?string $dateExpiration);
 
     /**
      * Set availability date of the message.
      *
-     * @param  string $dateAvailability
+     * @param  string|null $dateAvailability
      * @return $this
      */
-    public function setDateAvailability($dateAvailability);
+    public function setDateAvailability(?string $dateAvailability);
 
     /**
      * Set the creation date of the message.
@@ -184,13 +184,13 @@ interface MessageInterface
      * @param  string $dateCreate
      * @return $this
      */
-    public function setDateCreate($dateCreate);
+    public function setDateCreate(string $dateCreate);
 
     /**
      * Set the update date of the message.
      *
-     * @param  string $dateUpdate
+     * @param  string|null $dateUpdate
      * @return $this
      */
-    public function setDateUpdate($dateUpdate);
+    public function setDateUpdate(?string $dateUpdate);
 }

@@ -1,6 +1,6 @@
-<?php
+<?php declare(strict_types=1);
 
-/**
+/*
  * Copyright (c) Romain Cottard
  *
  * For the full copyright and license information, please view the LICENSE
@@ -78,7 +78,7 @@ trait MessageTrait
      *
      * @return string
      */
-    public function getId()
+    public function getId(): string
     {
         return $this->id;
     }
@@ -88,7 +88,7 @@ trait MessageTrait
      *
      * @return int
      */
-    public function getStatus()
+    public function getStatus(): int
     {
         return $this->status;
     }
@@ -98,7 +98,7 @@ trait MessageTrait
      *
      * @return int
      */
-    public function getPriority()
+    public function getPriority(): int
     {
         return $this->priority;
     }
@@ -108,7 +108,7 @@ trait MessageTrait
      *
      * @return string
      */
-    public function getTopic()
+    public function getTopic(): string
     {
         return $this->topic;
     }
@@ -118,7 +118,7 @@ trait MessageTrait
      *
      * @return string
      */
-    public function getContent()
+    public function getContent(): string
     {
         return $this->content;
     }
@@ -128,7 +128,7 @@ trait MessageTrait
      *
      * @return string
      */
-    public function getContentType()
+    public function getContentType(): string
     {
         return $this->contentType;
     }
@@ -138,19 +138,9 @@ trait MessageTrait
      *
      * @return string
      */
-    public function getEntityId()
+    public function getEntityId(): ?string
     {
         return $this->entityId;
-    }
-
-    /**
-     * Get Entity type linked to the message.
-     *
-     * @return string
-     */
-    public function getEntityType()
-    {
-        return $this->entityType;
     }
 
     /**
@@ -158,7 +148,7 @@ trait MessageTrait
      *
      * @return string
      */
-    public function getDateExpiration()
+    public function getDateExpiration(): ?string
     {
         return $this->dateExpiration;
     }
@@ -168,7 +158,7 @@ trait MessageTrait
      *
      * @return string
      */
-    public function getDateAvailability()
+    public function getDateAvailability(): ?string
     {
         return $this->dateAvailability;
     }
@@ -178,7 +168,7 @@ trait MessageTrait
      *
      * @return string
      */
-    public function getDateCreate()
+    public function getDateCreate(): string
     {
         return $this->dateCreate;
     }
@@ -188,7 +178,7 @@ trait MessageTrait
      *
      * @return string
      */
-    public function getDateUpdate()
+    public function getDateUpdate(): ?string
     {
         return $this->dateUpdate;
     }
@@ -197,9 +187,9 @@ trait MessageTrait
      * Set Message Identifier.
      *
      * @param  string $id
-     * @return $this
+     * @return MessageInterface
      */
-    public function setId($id)
+    public function setId(string $id): MessageInterface
     {
         $this->id = (string) $id;
 
@@ -215,14 +205,12 @@ trait MessageTrait
      *  3: ack received (treated, cannot be retreated)
      *
      * @param  int $status
-     * @return $this
+     * @return MessageInterface
      * @throws \UnderflowException
      */
-    public function setStatus($status)
+    public function setStatus(int $status): MessageInterface
     {
-        $status = (int) $status;
-
-        if ($this->status < 0) {
+        if ($status < 0) {
             throw new \UnderflowException('Value of "status" must be greater than 0');
         }
 
@@ -241,14 +229,12 @@ trait MessageTrait
      *  5: Very Low
      *
      * @param  int $priority
-     * @return $this
+     * @return MessageInterface
      * @throws \UnderflowException
      */
-    public function setPriority($priority)
+    public function setPriority(int $priority): MessageInterface
     {
-        $priority = (int) $priority;
-
-        if ($this->priority < 0) {
+        if ($priority < 0) {
             throw new \UnderflowException('Value of "priority" must be greater than 0');
         }
 
@@ -261,11 +247,11 @@ trait MessageTrait
      * Set message topic.
      *
      * @param  string $topic
-     * @return $this
+     * @return MessageInterface
      */
-    public function setTopic($topic)
+    public function setTopic(string $topic): MessageInterface
     {
-        $this->topic = (string) $topic;
+        $this->topic = $topic;
 
         return $this;
     }
@@ -274,11 +260,11 @@ trait MessageTrait
      * Set message content.
      *
      * @param  string $content
-     * @return $this
+     * @return MessageInterface
      */
-    public function setContent($content)
+    public function setContent(string $content): MessageInterface
     {
-        $this->content = (string) $content;
+        $this->content = $content;
 
         return $this;
     }
@@ -287,11 +273,11 @@ trait MessageTrait
      * Set message content type
      *
      * @param  string $contentType ('csv', 'json', 'xml', 'text'...)
-     * @return $this
+     * @return MessageInterface
      */
-    public function setContentType($contentType)
+    public function setContentType(string $contentType): MessageInterface
     {
-        $this->contentType = (string) $contentType;
+        $this->contentType = $contentType;
 
         return $this;
     }
@@ -300,11 +286,11 @@ trait MessageTrait
      * Set Entity identifier linked to the message.
      *
      * @param  string $entityId
-     * @return $this
+     * @return MessageInterface
      */
-    public function setEntityId($entityId)
+    public function setEntityId(?string $entityId): MessageInterface
     {
-        $this->entityId = ($entityId === null ? $entityId : (string) $entityId);
+        $this->entityId = $entityId;
 
         return $this;
     }
@@ -313,11 +299,11 @@ trait MessageTrait
      * Set the expiration date of the message.
      *
      * @param  string $dateExpiration
-     * @return $this
+     * @return MessageInterface
      */
-    public function setDateExpiration($dateExpiration)
+    public function setDateExpiration(?string $dateExpiration): MessageInterface
     {
-        $this->dateExpiration = ($dateExpiration === null ? $dateExpiration : (string) $dateExpiration);
+        $this->dateExpiration = $dateExpiration;
 
         return $this;
     }
@@ -326,11 +312,11 @@ trait MessageTrait
      * Set availability date of the message.
      *
      * @param  string $dateAvailability
-     * @return $this
+     * @return MessageInterface
      */
-    public function setDateAvailability($dateAvailability)
+    public function setDateAvailability(?string $dateAvailability): MessageInterface
     {
-        $this->dateAvailability = ($dateAvailability === null ? $dateAvailability : (string) $dateAvailability);
+        $this->dateAvailability = $dateAvailability;
 
         return $this;
     }
@@ -339,11 +325,11 @@ trait MessageTrait
      * Set the creation date of the message.
      *
      * @param  string $dateCreate
-     * @return $this
+     * @return MessageInterface
      */
-    public function setDateCreate($dateCreate)
+    public function setDateCreate(string $dateCreate): MessageInterface
     {
-        $this->dateCreate = (string) $dateCreate;
+        $this->dateCreate = $dateCreate;
 
         return $this;
     }
@@ -352,11 +338,11 @@ trait MessageTrait
      * Set the update date of the message.
      *
      * @param  string $dateUpdate
-     * @return $this
+     * @return MessageInterface
      */
-    public function setDateUpdate($dateUpdate)
+    public function setDateUpdate(?string $dateUpdate): MessageInterface
     {
-        $this->dateUpdate = ($dateUpdate === null ? $dateUpdate : (string) $dateUpdate);
+        $this->dateUpdate = $dateUpdate;
 
         return $this;
     }

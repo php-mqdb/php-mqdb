@@ -1,6 +1,6 @@
-<?php
+<?php declare(strict_types=1);
 
-/**
+/*
  * Copyright (c) Romain Cottard
  *
  * For the full copyright and license information, please view the LICENSE
@@ -17,13 +17,14 @@ namespace PhpMqdb\Message;
 class MessageJson extends Message
 {
     /**
-     * JsonMessage constructor.
+     * MessageJson constructor.
      *
-     * @param string $topic
-     * @param mixed $content
+     * @param string|null $topic
+     * @param null $content
      * @param bool $forceJsonEncode
+     * @throws \Exception
      */
-    public function __construct($topic = null, $content = null, $forceJsonEncode = true)
+    public function __construct(string $topic = null, $content = null, bool $forceJsonEncode = true)
     {
         $dateNow = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
         $this->setDateCreate($dateNow->format('Y-m-d H:i:s'));
@@ -40,7 +41,7 @@ class MessageJson extends Message
             if ($forceJsonEncode) {
                 $content = json_encode($content);
             }
-            $this->setContent($content);
+            $this->setContent((string) $content);
         }
     }
 }

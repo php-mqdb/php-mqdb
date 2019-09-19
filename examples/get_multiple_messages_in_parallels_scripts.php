@@ -10,12 +10,16 @@
 namespace PhpMqdb\Examples;
 
 use PhpMqdb\Client;
+use PhpMqdb\Config\TableConfig;
 use PhpMqdb\Filter;
+use PhpMqdb\Message\MessageFactory;
+use PhpMqdb\Query\QueryBuilderFactory;
 use PhpMqdb\Repository\PDOMessageRepository;
 
+$time = -microtime(true);
 $messageList = [];
 
-for ($childIndex = 0; $childIndex < 10; $childIndex++) {
+for ($childIndex = 0; $childIndex < 20; $childIndex++) {
     $pid = pcntl_fork();
 
     if ($pid === -1 || $pid === 0) {
@@ -44,8 +48,33 @@ exit(0);
 
 //~ Child Process
 child:
+
 require_once __DIR__ . '/../vendor/autoload.php';
 $dbConf = require_once __DIR__ . '/config.php';
+
+//~ Table Config
+$tableConfig = new TableConfig();
+$tableConfig->setFields(
+    [
+        'id'                => 'message_id',
+        'status'            => 'message_status',
+        'priority'          => 'message_priority',
+        'topic'             => 'message_topic',
+        'content'           => 'message_content',
+        'content_type'      => 'message_content_type',
+        'pending_id'        => 'message_pending_id',
+        'date_create'       => 'message_date_create',
+        'date_update'       => 'message_date_update',
+    ]
+);
+
+$tableConfig->setOrders([
+    'priority' => 'ASC',
+]);
+
+//~ Factories
+$messageFactory      = new MessageFactory($tableConfig);
+$queryBuilderFactory = new QueryBuilderFactory($tableConfig);
 
 //~ Connection
 $connection = new \PDO($dbConf->dsn, $dbConf->user, $dbConf->pass, $dbConf->opts);
@@ -53,12 +82,17 @@ $connection->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
 
 //~ Repository
 $repository = new PDOMessageRepository($connection);
+$repository->setMessageFactory($messageFactory);
+$repository->setQueryBuilderFactory($queryBuilderFactory);
 
 //~ Client
 $client = new Client($repository);
 
 //~ Filter
-$filter = (new Filter())->setLimit(20);
+$filter = (new Filter())
+    ->setPriorities([3])
+    ->setLimit(20)
+;
 
 //~ Get messages
 $messages = $client->getMessages($filter);
@@ -73,3 +107,6 @@ foreach ($messages as $message) {
 
     echo $content->title . PHP_EOL;
 }
+
+$time += microtime(true);
+echo "Time taken: " . round($time, 5) . PHP_EOL;

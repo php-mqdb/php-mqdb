@@ -1,7 +1,6 @@
-<?php
+<?php declare(strict_types=1);
 
-
-/**
+/*
  * Copyright Romain Cottard
  *
  * For the full copyright and license information, please view the LICENSE
@@ -10,7 +9,7 @@
 
 namespace PhpMqdb\Repository;
 
-use PhpMqdb\Enumerator\Status;
+use PhpMqdb\Exception\EmptySetValuesException;
 use PhpMqdb\Filter;
 use PhpMqdb\Message\MessageInterface;
 
@@ -43,18 +42,18 @@ interface MessageRepositoryInterface
      * Send acknowledgement to the server.
      *
      * @param  string $id
-     * @return $this
+     * @return MessageRepositoryInterface
      */
-    public function ack($id);
+    public function ack(string $id): MessageRepositoryInterface;
 
     /**
      * Send non-acknowledgement to the server.
      *
      * @param  string $id
      * @param  bool $requeue
-     * @return $this
+     * @return MessageRepositoryInterface
      */
-    public function nack($id, $requeue = true);
+    public function nack(string $id, bool $requeue = true): MessageRepositoryInterface;
 
     /**
      * Get message based on given context.
@@ -62,7 +61,7 @@ interface MessageRepositoryInterface
      * @param  Filter $filter
      * @return MessageInterface
      */
-    public function getMessage(Filter $filter);
+    public function getMessage(Filter $filter): MessageInterface;
 
     /**
      * Get messages based on given context.
@@ -70,7 +69,7 @@ interface MessageRepositoryInterface
      * @param  Filter $filter
      * @return MessageInterface[]
      */
-    public function getMessages(Filter $filter);
+    public function getMessages(Filter $filter): iterable;
 
     /**
      * Count messages based on given context
@@ -78,7 +77,7 @@ interface MessageRepositoryInterface
      * @param Filter $filter
      * @return int
      */
-    public function countMessages(Filter $filter);
+    public function countMessages(Filter $filter): int;
 
     /**
      * Publish message in queue.
@@ -87,7 +86,7 @@ interface MessageRepositoryInterface
      * @param  bool $allowStatusUpdate Should status of messages be change on update or not (default false)
      * @return $this
      */
-    public function publishMessage(MessageInterface $message, $allowStatusUpdate = false);
+    public function publishMessage(MessageInterface $message, bool $allowStatusUpdate = false): MessageRepositoryInterface;
 
     /**
      * Publish message, or update if there is already a message for the same entity_id in queue
@@ -102,36 +101,18 @@ interface MessageRepositoryInterface
      * Clean pending message with date update above given interval.
      *
      * @param  \DateInterval $interval
-     * @return $this
+     * @return MessageRepositoryInterface
      */
-    public function cleanPendingMessages(\DateInterval $interval);
+    public function cleanPendingMessages(\DateInterval $interval): MessageRepositoryInterface;
 
     /**
      * Clean message were done (ack / nack received)
      *
      * @param  \DateInterval $interval
      * @param  int $bitmaskDelete
-     * @return $this
+     * @return MessageRepositoryInterface
      * @throws \LogicException
      */
-    public function cleanMessages(\DateInterval $interval, $bitmaskDelete = self::DELETE_SAFE);
-
-    /**
-     * Override fields names.
-     *
-     * @param  string[] $fields
-     * @return $this
-     */
-    public function setFields(array $fields);
-
-    /**
-     * Override table name.
-     *
-     * @param  string $table
-     * @return $this
-     * @throws \PhpMqdb\Exception\EmptySetValuesException
-     * @throws \LogicException
-     */
-    public function setTable($table);
+    public function cleanMessages(\DateInterval $interval, int $bitmaskDelete = self::DELETE_SAFE): MessageRepositoryInterface;
 
 }
