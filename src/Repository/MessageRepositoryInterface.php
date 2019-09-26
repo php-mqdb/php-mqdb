@@ -61,7 +61,7 @@ interface MessageRepositoryInterface
      * @param  Filter $filter
      * @return MessageInterface
      */
-    public function getMessage(Filter $filter): MessageInterface;
+    public function getMessage(Filter $filter): ?MessageInterface;
 
     /**
      * Get messages based on given context.

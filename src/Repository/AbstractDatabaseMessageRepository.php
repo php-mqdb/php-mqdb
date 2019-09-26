@@ -107,15 +107,19 @@ abstract class AbstractDatabaseMessageRepository implements MessageRepositoryInt
      * Get message based on given context.
      *
      * @param Filter $filter
-     * @return Message\MessageInterface
+     * @return Message\MessageInterface|null
      * @throws PhpMqdbConfigurationException
      */
-    public function getMessage(Filter $filter): Message\MessageInterface
+    public function getMessage(Filter $filter): ?Message\MessageInterface
     {
         //~ override filter limit to 1
         $filter->setLimit(1);
 
         $messages = $this->getMessages($filter);
+
+        if (empty($messages)) {
+            return null;
+        }
 
         return array_pop($messages);
     }
