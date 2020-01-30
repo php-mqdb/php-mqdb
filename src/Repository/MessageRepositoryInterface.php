@@ -98,7 +98,7 @@ interface MessageRepositoryInterface
     public function publishOrUpdateEntityMessage(MessageInterface $message);
 
     /**
-     * Clean pending message with date update above given interval.
+     * Clean pending messages with date update above given interval.
      *
      * @param  \DateInterval $interval
      * @return MessageRepositoryInterface
@@ -106,7 +106,15 @@ interface MessageRepositoryInterface
     public function cleanPendingMessages(\DateInterval $interval): MessageRepositoryInterface;
 
     /**
-     * Clean message were done (ack / nack received)
+     * Reset pending messages with date update above given interval.
+     *
+     * @param  \DateInterval $interval
+     * @return MessageRepositoryInterface
+     */
+    public function ResetPendingMessages(\DateInterval $interval): MessageRepositoryInterface;
+
+    /**
+     * Clean done messages (ack / nack received)
      *
      * @param  \DateInterval $interval
      * @param  int $bitmaskDelete

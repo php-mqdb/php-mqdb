@@ -124,7 +124,9 @@ class Client
     }
 
     /**
-     * Clean pending message with date update above given interval.
+     * Clean pending messages with date update above given interval.
+     * ie set them to NACK to tell you don't know if they have been consumed or not
+     * to be used if you want to insure your message won't be consumed twice, even if it may not be consumed at all
      *
      * @param  \DateInterval $interval
      * @return $this
@@ -137,7 +139,22 @@ class Client
     }
 
     /**
-     * Clean message were done (ack / nack received)
+     * Reset pending messages with date update above given interval,
+     * ie set them back to IN QUEUE to be consumed by a new worker in case they have not yet be consumed
+     * to be used if you want to insure your message will be consumed, even if it may be done several times
+     *
+     * @param  \DateInterval $interval
+     * @return $this
+     */
+    public function replayPendingMessages(\DateInterval $interval)
+    {
+        $this->messageRepository->resetPendingMessages($interval);
+
+        return $this;
+    }
+
+    /**
+     * Clean done messages (ack / nack received)
      *
      * @param  \DateInterval $interval
      * @param  int $bitmaskDelete

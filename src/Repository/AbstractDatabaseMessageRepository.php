@@ -222,13 +222,8 @@ abstract class AbstractDatabaseMessageRepository implements MessageRepositoryInt
         \DateInterval $interval,
         int $deleteBitmask = self::DELETE_SAFE
     ): MessageRepositoryInterface {
-
-        $date = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
-        $date = $date->sub($interval);
-
         $queryBuilder = $this->getQueryBuilder();
-
-        $this->executeQuery($queryBuilder->buildQueryClean($deleteBitmask, $date->format('Y-m-d H:i:s')));
+        $this->executeQuery($queryBuilder->buildQueryClean($deleteBitmask, $this->getRelativeDate($interval)));
 
         return $this;
     }
@@ -240,13 +235,21 @@ abstract class AbstractDatabaseMessageRepository implements MessageRepositoryInt
      */
     public function cleanPendingMessages(\DateInterval $interval): MessageRepositoryInterface
     {
-        $date = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
-        $date = $date->sub($interval);
-
-
         $queryBuilder = $this->getQueryBuilder();
+        $this->executeQuery($queryBuilder->buildQueryCleanPending($this->getRelativeDate($interval)));
 
-        $this->executeQuery($queryBuilder->buildQueryCleanPending($date->format('Y-m-d H:i:s')));
+        return $this;
+    }
+
+    /**
+     * @param \DateInterval $interval
+     * @return MessageRepositoryInterface
+     * @throws \Exception
+     */
+    public function resetPendingMessages(\DateInterval $interval): MessageRepositoryInterface
+    {
+        $queryBuilder = $this->getQueryBuilder();
+        $this->executeQuery($queryBuilder->buildQueryResetPending($this->getRelativeDate($interval)));
 
         return $this;
     }
@@ -262,8 +265,6 @@ abstract class AbstractDatabaseMessageRepository implements MessageRepositoryInt
         Message\MessageInterface $message
     ): MessageRepositoryInterface {
         // Update message using existing date when needed
-        $now = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
-
         $message->setId($existingMessage->getId())
             ->setStatus(Enumerator\Status::IN_QUEUE)
             ->setDateCreate($existingMessage->getDateCreate())
@@ -271,7 +272,7 @@ abstract class AbstractDatabaseMessageRepository implements MessageRepositoryInt
             ->setPriority(
                 min($message->getPriority(), $existingMessage->getPriority())
             ) // We keep the highest priority (ie lowest value)
-            ->setDateUpdate($now->format('Y-m-d H:i:s'))
+            ->setDateUpdate($this->getRelativeDate())
         ;
 
         return $this;
@@ -309,8 +310,27 @@ abstract class AbstractDatabaseMessageRepository implements MessageRepositoryInt
         return implode('-', $chunks);
     }
 
+    /**
+     * @return QueryBuilder
+     */
     protected function getQueryBuilder(): QueryBuilder
     {
         return $this->queryBuilderFactory->getBuilder();
+    }
+
+    /**
+     * @param \DateInterval|null $interval
+     * @return string
+     * @throws \Exception
+     */
+    private function getRelativeDate(\DateInterval $interval = null): string
+    {
+        $date = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
+
+        if ($interval !== null) {
+            $date = $date->sub($interval);
+        }
+
+        return $date->format('Y-m-d H:i:s');
     }
 }
