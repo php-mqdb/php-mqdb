@@ -213,14 +213,18 @@ class QueryBuilder
 
         $this->query =
             'UPDATE `' . $table . '` SET ' .
-            $this->tableConfig->getField('pending_id') . ' = :new_pending_id, ' .
-            $this->tableConfig->getField('status') .' = :new_status ' .
+            $this->tableConfig->getField('status') . ' = :new_status, ' .
+            $this->tableConfig->getField('date_update') . ' = :new_date_update, ' .
+            $this->tableConfig->getField('pending_id') . ' = :new_pending_id ' .
             $this->buildWhere($filter) .
             $this->buildOrder($order, $filter) .
             $this->buildLimit($filter)
         ;
 
         $this->bind[':new_status']     = Enumerator\Status::ACK_PENDING;
+        $this->bind[':new_date_update'] = (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->format(
+            'Y-m-d H:i:s'
+        );
         $this->bind[':new_pending_id'] = $pendingId;
 
         return $this;
