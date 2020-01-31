@@ -111,7 +111,7 @@ interface MessageRepositoryInterface
      * @param  \DateInterval $interval
      * @return MessageRepositoryInterface
      */
-    public function ResetPendingMessages(\DateInterval $interval): MessageRepositoryInterface;
+    public function resetPendingMessages(\DateInterval $interval): MessageRepositoryInterface;
 
     /**
      * Clean done messages (ack / nack received)
