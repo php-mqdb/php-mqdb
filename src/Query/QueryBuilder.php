@@ -178,7 +178,29 @@ class QueryBuilder
 
         $this->bind[':new_message_status'] = Enumerator\Status::ACK_NOT_RECEIVED;
         $this->bind[':message_status']     = Enumerator\Status::ACK_PENDING;
-        $this->bind[':date_update']        =$date;
+        $this->bind[':date_update']        = $date;
+
+        return $this;
+    }
+
+    /**
+     * @param string $date
+     * @return QueryBuilder
+     * @throws \Exception
+     */
+    public function buildQueryResetPending(string $date): self
+    {
+        $this->query =
+            'UPDATE ' . $this->tableConfig->getTable() .
+            ' SET ' . $this->tableConfig->getField('status') . ' = :new_message_status, ' .
+            $this->tableConfig->getField('pending_id') . ' = NULL WHERE ' .
+            $this->tableConfig->getField('status') . ' = :message_status AND ' .
+            $this->tableConfig->getField('date_update') . ' <= :date_update AND ' .
+            $this->tableConfig->getField('date_update') . ' IS NOT NULL';
+
+        $this->bind[':new_message_status'] = Enumerator\Status::IN_QUEUE;
+        $this->bind[':message_status']     = Enumerator\Status::ACK_PENDING;
+        $this->bind[':date_update']        = $date;
 
         return $this;
     }
