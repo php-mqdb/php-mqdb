@@ -187,14 +187,20 @@ abstract class AbstractDatabaseMessageRepository implements MessageRepositoryInt
     }
 
     /**
+     * Publish message, or update if there is already a message for the same entity_id in queue
+     *  Check Client::publishOrUpdateEntityMessage documentation for important notes about usage
+     *
      * @param MessageInterface $message
+     * @param callable|null $mergeCallback
      * @return MessageRepositoryInterface
      * @throws EmptySetValuesException
      * @throws PhpMqdbConfigurationException
      * @throws \Exception
      */
-    public function publishOrUpdateEntityMessage(Message\MessageInterface $message): MessageRepositoryInterface
-    {
+    public function publishOrUpdateEntityMessage(
+        Message\MessageInterface $message,
+        ?callable $mergeCallback = null
+    ): MessageRepositoryInterface {
         if (empty($message->getEntityId())) {
             throw new \LogicException("Can't use publishOrUpdateEntityMessage if there is not Entity in the message");
         }
@@ -207,6 +213,10 @@ abstract class AbstractDatabaseMessageRepository implements MessageRepositoryInt
 
         if ($existingMessage instanceof Message\MessageInterface) {
             $this->mergeMessages($existingMessage, $message);
+
+            if ($mergeCallback !== null) {
+                $mergeCallback($existingMessage, $message);
+            }
         }
 
         return $this->publishMessage($message, true);
