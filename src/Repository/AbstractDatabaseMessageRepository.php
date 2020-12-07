@@ -187,14 +187,20 @@ abstract class AbstractDatabaseMessageRepository implements MessageRepositoryInt
     }
 
     /**
+     * Publish message, or update if there is already a message for the same entity_id in queue
+     *  Check Client::publishOrUpdateEntityMessage documentation for important notes about usage
+     *
      * @param MessageInterface $message
+     * @param callable|null $mergeCallback
      * @return MessageRepositoryInterface
      * @throws EmptySetValuesException
      * @throws PhpMqdbConfigurationException
      * @throws \Exception
      */
-    public function publishOrUpdateEntityMessage(Message\MessageInterface $message): MessageRepositoryInterface
-    {
+    public function publishOrUpdateEntityMessage(
+        Message\MessageInterface $message,
+        ?callable $mergeCallback = null
+    ): MessageRepositoryInterface {
         if (empty($message->getEntityId())) {
             throw new \LogicException("Can't use publishOrUpdateEntityMessage if there is not Entity in the message");
         }
@@ -206,7 +212,11 @@ abstract class AbstractDatabaseMessageRepository implements MessageRepositoryInt
         $existingMessage = $this->getMessage($filterExisting);
 
         if ($existingMessage instanceof Message\MessageInterface) {
-            $this->mergeMessages($existingMessage, $message);
+            if ($mergeCallback !== null) {
+                $mergeCallback($existingMessage, $message);
+            } else {
+                self::mergeMessages($existingMessage, $message);
+            }
         }
 
         return $this->publishMessage($message, true);
@@ -223,7 +233,7 @@ abstract class AbstractDatabaseMessageRepository implements MessageRepositoryInt
         int $deleteBitmask = self::DELETE_SAFE
     ): MessageRepositoryInterface {
         $queryBuilder = $this->getQueryBuilder();
-        $this->executeQuery($queryBuilder->buildQueryClean($deleteBitmask, $this->getRelativeDate($interval)));
+        $this->executeQuery($queryBuilder->buildQueryClean($deleteBitmask, self::getRelativeDate($interval)));
 
         return $this;
     }
@@ -236,7 +246,7 @@ abstract class AbstractDatabaseMessageRepository implements MessageRepositoryInt
     public function cleanPendingMessages(\DateInterval $interval): MessageRepositoryInterface
     {
         $queryBuilder = $this->getQueryBuilder();
-        $this->executeQuery($queryBuilder->buildQueryCleanPending($this->getRelativeDate($interval)));
+        $this->executeQuery($queryBuilder->buildQueryCleanPending(self::getRelativeDate($interval)));
 
         return $this;
     }
@@ -249,31 +259,7 @@ abstract class AbstractDatabaseMessageRepository implements MessageRepositoryInt
     public function resetPendingMessages(\DateInterval $interval): MessageRepositoryInterface
     {
         $queryBuilder = $this->getQueryBuilder();
-        $this->executeQuery($queryBuilder->buildQueryResetPending($this->getRelativeDate($interval)));
-
-        return $this;
-    }
-
-    /**
-     * @param MessageInterface $existingMessage
-     * @param MessageInterface $message
-     * @return MessageRepositoryInterface
-     * @throws \Exception
-     */
-    protected function mergeMessages(
-        Message\MessageInterface $existingMessage,
-        Message\MessageInterface $message
-    ): MessageRepositoryInterface {
-        // Update message using existing date when needed
-        $message->setId($existingMessage->getId())
-            ->setStatus(Enumerator\Status::IN_QUEUE)
-            ->setDateCreate($existingMessage->getDateCreate())
-            ->setDateAvailability($existingMessage->getDateAvailability()) // Keep previous availability
-            ->setPriority(
-                min($message->getPriority(), $existingMessage->getPriority())
-            ) // We keep the highest priority (ie lowest value)
-            ->setDateUpdate($this->getRelativeDate())
-        ;
+        $this->executeQuery($queryBuilder->buildQueryResetPending(self::getRelativeDate($interval)));
 
         return $this;
     }
@@ -319,11 +305,35 @@ abstract class AbstractDatabaseMessageRepository implements MessageRepositoryInt
     }
 
     /**
+     * @param MessageInterface $existingMessage
+     * @param MessageInterface $message
+     * @return Message\MessageInterface
+     * @throws \Exception
+     */
+    public static function mergeMessages(
+        Message\MessageInterface $existingMessage,
+        Message\MessageInterface $message
+    ): Message\MessageInterface {
+        // Update message using existing date when needed
+        $message->setId($existingMessage->getId())
+            ->setStatus(Enumerator\Status::IN_QUEUE)
+            ->setDateCreate($existingMessage->getDateCreate())
+            ->setDateAvailability($existingMessage->getDateAvailability()) // Keep previous availability
+            ->setPriority(
+                min($message->getPriority(), $existingMessage->getPriority())
+            ) // We keep the highest priority (ie lowest value)
+            ->setDateUpdate(self::getRelativeDate())
+        ;
+
+        return $message;
+    }
+
+    /**
      * @param \DateInterval|null $interval
      * @return string
      * @throws \Exception
      */
-    private function getRelativeDate(\DateInterval $interval = null): string
+    private static function getRelativeDate(\DateInterval $interval = null): string
     {
         $date = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
 

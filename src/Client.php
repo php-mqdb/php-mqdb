@@ -113,12 +113,15 @@ class Client
      *  Note 2: priority of the message will be the highest between existing and new message
      *  Note 3: message content is overwritten (should not be used when contents may be different)
      *
-     * @param  Message\MessageInterface $message
+     * @param Message\MessageInterface $message
+     * @param callable|null $mergeCallback
      * @return $this
+     * @throws Exception\EmptySetValuesException
+     * @throws Exception\PhpMqdbConfigurationException
      */
-    public function publishOrUpdateEntityMessage(Message\MessageInterface $message)
+    public function publishOrUpdateEntityMessage(Message\MessageInterface $message, ?callable $mergeCallback = null)
     {
-        $this->messageRepository->publishOrUpdateEntityMessage($message);
+        $this->messageRepository->publishOrUpdateEntityMessage($message, $mergeCallback);
 
         return $this;
     }

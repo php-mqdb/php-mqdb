@@ -10,6 +10,7 @@
 namespace PhpMqdb\Repository;
 
 use PhpMqdb\Exception\EmptySetValuesException;
+use PhpMqdb\Exception\PhpMqdbConfigurationException;
 use PhpMqdb\Filter;
 use PhpMqdb\Message\MessageInterface;
 
@@ -93,9 +94,13 @@ interface MessageRepositoryInterface
      *  Check Client::publishOrUpdateEntityMessage documentation for important notes about usage
      *
      * @param MessageInterface $message
-     * @return mixed
+     * @param callable|null $mergeCallback
+     * @return MessageRepositoryInterface
+     * @throws EmptySetValuesException
+     * @throws PhpMqdbConfigurationException
+     * @throws \Exception
      */
-    public function publishOrUpdateEntityMessage(MessageInterface $message);
+    public function publishOrUpdateEntityMessage(MessageInterface $message, ?callable $mergeCallback = null): MessageRepositoryInterface;
 
     /**
      * Clean pending messages with date update above given interval.
@@ -123,4 +128,11 @@ interface MessageRepositoryInterface
      */
     public function cleanMessages(\DateInterval $interval, int $bitmaskDelete = self::DELETE_SAFE): MessageRepositoryInterface;
 
+    /**
+     * @param MessageInterface $existingMessage
+     * @param MessageInterface $message
+     * @return MessageInterface
+     * @throws \Exception
+     */
+    public static function mergeMessages(MessageInterface $existingMessage, MessageInterface $message): MessageInterface;
 }
