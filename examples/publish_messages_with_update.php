@@ -74,9 +74,6 @@ echo 'Message should have content with filter value "2": ' . $contentUpdated->fi
 
 $callbackMerge = function(Message\MessageInterface $existingMessage, Message\MessageInterface $message)
 {
-    //~ Apply base merging
-    AbstractDatabaseMessageRepository::mergeMessages($existingMessage, $message);
-
     $oldContent = json_decode($existingMessage->getContent());
     $newContent = json_decode($message->getContent());
 

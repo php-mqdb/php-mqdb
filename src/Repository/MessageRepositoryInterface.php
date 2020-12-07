@@ -127,12 +127,4 @@ interface MessageRepositoryInterface
      * @throws \LogicException
      */
     public function cleanMessages(\DateInterval $interval, int $bitmaskDelete = self::DELETE_SAFE): MessageRepositoryInterface;
-
-    /**
-     * @param MessageInterface $existingMessage
-     * @param MessageInterface $message
-     * @return MessageInterface
-     * @throws \Exception
-     */
-    public static function mergeMessages(MessageInterface $existingMessage, MessageInterface $message): MessageInterface;
 }

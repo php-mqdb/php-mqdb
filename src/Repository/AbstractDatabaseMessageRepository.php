@@ -212,10 +212,10 @@ abstract class AbstractDatabaseMessageRepository implements MessageRepositoryInt
         $existingMessage = $this->getMessage($filterExisting);
 
         if ($existingMessage instanceof Message\MessageInterface) {
+            $this->mergeMessages($existingMessage, $message);
+
             if ($mergeCallback !== null) {
                 $mergeCallback($existingMessage, $message);
-            } else {
-                self::mergeMessages($existingMessage, $message);
             }
         }
 
@@ -233,7 +233,7 @@ abstract class AbstractDatabaseMessageRepository implements MessageRepositoryInt
         int $deleteBitmask = self::DELETE_SAFE
     ): MessageRepositoryInterface {
         $queryBuilder = $this->getQueryBuilder();
-        $this->executeQuery($queryBuilder->buildQueryClean($deleteBitmask, self::getRelativeDate($interval)));
+        $this->executeQuery($queryBuilder->buildQueryClean($deleteBitmask, $this->getRelativeDate($interval)));
 
         return $this;
     }
@@ -246,7 +246,7 @@ abstract class AbstractDatabaseMessageRepository implements MessageRepositoryInt
     public function cleanPendingMessages(\DateInterval $interval): MessageRepositoryInterface
     {
         $queryBuilder = $this->getQueryBuilder();
-        $this->executeQuery($queryBuilder->buildQueryCleanPending(self::getRelativeDate($interval)));
+        $this->executeQuery($queryBuilder->buildQueryCleanPending($this->getRelativeDate($interval)));
 
         return $this;
     }
@@ -259,7 +259,31 @@ abstract class AbstractDatabaseMessageRepository implements MessageRepositoryInt
     public function resetPendingMessages(\DateInterval $interval): MessageRepositoryInterface
     {
         $queryBuilder = $this->getQueryBuilder();
-        $this->executeQuery($queryBuilder->buildQueryResetPending(self::getRelativeDate($interval)));
+        $this->executeQuery($queryBuilder->buildQueryResetPending($this->getRelativeDate($interval)));
+
+        return $this;
+    }
+
+    /**
+     * @param MessageInterface $existingMessage
+     * @param MessageInterface $message
+     * @return MessageRepositoryInterface
+     * @throws \Exception
+     */
+    protected function mergeMessages(
+        Message\MessageInterface $existingMessage,
+        Message\MessageInterface $message
+    ): MessageRepositoryInterface {
+        // Update message using existing date when needed
+        $message->setId($existingMessage->getId())
+            ->setStatus(Enumerator\Status::IN_QUEUE)
+            ->setDateCreate($existingMessage->getDateCreate())
+            ->setDateAvailability($existingMessage->getDateAvailability()) // Keep previous availability
+            ->setPriority(
+                min($message->getPriority(), $existingMessage->getPriority())
+            ) // We keep the highest priority (ie lowest value)
+            ->setDateUpdate($this->getRelativeDate())
+        ;
 
         return $this;
     }
@@ -305,35 +329,11 @@ abstract class AbstractDatabaseMessageRepository implements MessageRepositoryInt
     }
 
     /**
-     * @param MessageInterface $existingMessage
-     * @param MessageInterface $message
-     * @return Message\MessageInterface
-     * @throws \Exception
-     */
-    public static function mergeMessages(
-        Message\MessageInterface $existingMessage,
-        Message\MessageInterface $message
-    ): Message\MessageInterface {
-        // Update message using existing date when needed
-        $message->setId($existingMessage->getId())
-            ->setStatus(Enumerator\Status::IN_QUEUE)
-            ->setDateCreate($existingMessage->getDateCreate())
-            ->setDateAvailability($existingMessage->getDateAvailability()) // Keep previous availability
-            ->setPriority(
-                min($message->getPriority(), $existingMessage->getPriority())
-            ) // We keep the highest priority (ie lowest value)
-            ->setDateUpdate(self::getRelativeDate())
-        ;
-
-        return $message;
-    }
-
-    /**
      * @param \DateInterval|null $interval
      * @return string
      * @throws \Exception
      */
-    private static function getRelativeDate(\DateInterval $interval = null): string
+    private function getRelativeDate(\DateInterval $interval = null): string
     {
         $date = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
 
