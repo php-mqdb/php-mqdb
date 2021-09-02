@@ -309,12 +309,13 @@ abstract class AbstractDatabaseMessageRepository implements MessageRepositoryInt
      *
      * @param int $nbChunk Number of "chunk" of 8 hexadecimal chars in generated id.
      * @return string
+     * @throws \Exception
      */
     private function generateId(int $nbChunk = 4): string
     {
         $chunks = [];
         for ($i = 0; $i < $nbChunk; $i++) {
-            $chunks[] = sprintf('%08x', mt_rand(0, 0xffffffff));
+            $chunks[] = sprintf('%08x', random_int(0, 0xffffffff));
         }
 
         return implode('-', $chunks);
