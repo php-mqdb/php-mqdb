@@ -103,6 +103,17 @@ interface MessageRepositoryInterface
     public function publishOrUpdateEntityMessage(MessageInterface $message, ?callable $mergeCallback = null): MessageRepositoryInterface;
 
     /**
+     * Publish message, or skip if there is already a message for the same entity_id in queue or pending
+     *
+     * @param MessageInterface $message
+     * @return MessageRepositoryInterface
+     * @throws EmptySetValuesException
+     * @throws PhpMqdbConfigurationException
+     * @throws \Exception
+     */
+    public function publishOrSkipEntityMessage(MessageInterface $message): MessageRepositoryInterface;
+
+    /**
      * Clean pending messages with date update above given interval.
      *
      * @param  \DateInterval $interval

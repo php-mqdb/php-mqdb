@@ -111,7 +111,7 @@ class Client
      * Publish message, or update if there is already a message for the same entity_id in queue
      *  Note 1: doesn't ensure there will never be duplicate messages (only to be used for performance when worker can be slow)
      *  Note 2: priority of the message will be the highest between existing and new message
-     *  Note 3: message content is overwritten (should not be used when contents may be different)
+     *  Note 3: message content is overwritten if no merge callback is passed (should not be used when contents may be different)
      *
      * @param Message\MessageInterface $message
      * @param callable|null $mergeCallback
@@ -122,6 +122,21 @@ class Client
     public function publishOrUpdateEntityMessage(Message\MessageInterface $message, ?callable $mergeCallback = null)
     {
         $this->messageRepository->publishOrUpdateEntityMessage($message, $mergeCallback);
+
+        return $this;
+    }
+
+    /**
+     * Publish message, or skip if there is already a message for the same entity_id in queue or pending
+     *
+     * @param Message\MessageInterface $message
+     * @return $this
+     * @throws Exception\EmptySetValuesException
+     * @throws Exception\PhpMqdbConfigurationException
+     */
+    public function publishOrSkipEntityMessage(Message\MessageInterface $message)
+    {
+        $this->messageRepository->publishOrSkipEntityMessage($message);
 
         return $this;
     }

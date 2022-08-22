@@ -223,6 +223,32 @@ abstract class AbstractDatabaseMessageRepository implements MessageRepositoryInt
     }
 
     /**
+     * Publish message, or update if there is already a message for the same entity_id in queue
+     *
+     * @param MessageInterface $message
+     * @return MessageRepositoryInterface
+     * @throws EmptySetValuesException
+     * @throws PhpMqdbConfigurationException
+     * @throws \Exception
+     */
+    public function publishOrSkipEntityMessage(Message\MessageInterface $message): MessageRepositoryInterface
+    {
+        if (empty($message->getEntityId())) {
+            throw new \LogicException("Can't use publishOrSkipEntityMessage if there is not Entity in the message");
+        }
+
+        $filterExisting = new Filter();
+        $filterExisting->setEntityId($message->getEntityId())->setTopic($message->getTopic());
+        $stmt = $this->executeQuery($this->getQueryBuilder()->buildQueryCountExisting($filterExisting));
+        $count = (int) $stmt->fetchColumn();
+        if ($count > 0) {
+            return $this;
+        }
+
+        return $this->publishMessage($message);
+    }
+
+    /**
      * @param \DateInterval $interval
      * @param int $deleteBitmask
      * @return MessageRepositoryInterface

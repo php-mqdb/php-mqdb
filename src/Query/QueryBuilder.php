@@ -220,6 +220,24 @@ class QueryBuilder
         return $this;
     }
 
+    public function buildQueryCountExisting(Filter $filter): self
+    {
+        $this->query =
+            'SELECT COUNT(' . $this->tableConfig->getField('id') . ')' .
+            ' FROM ' . $this->tableConfig->getTable() .
+            ' WHERE ' . $this->tableConfig->getField('status') . ' IN (:status_in_queue, :status_ackp)' .
+            ' AND ' . $this->tableConfig->getField('entity_id') . ' = :entity_id' .
+            ' AND ' . $this->tableConfig->getField('topic') . ' = :topic';
+        $this->bind = [
+            ':status_in_queue' => Enumerator\Status::IN_QUEUE,
+            ':status_ackp' => Enumerator\Status::ACK_PENDING,
+            ':entity_id' => $filter->getEntityId(),
+            ':topic' => $filter->getTopic(),
+        ];
+
+        return $this;
+    }
+
     /**
      * Build query to update message(s) before to get it.
      *
