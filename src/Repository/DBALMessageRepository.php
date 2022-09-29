@@ -57,8 +57,8 @@ class DBALMessageRepository extends AbstractDatabaseMessageRepository
                 throw $exception;
             }
 
-            // Sleep 1/10 second
-            usleep(100000);
+            // Sleep between 25 & 100ms before retrying to prevent connections to retry at same time
+            usleep(mt_rand(25000, 100000));
 
             $this->connection->close();
             $stmt = $this->connection->prepare($query);
