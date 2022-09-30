@@ -34,7 +34,7 @@
     "php": "7.4.*|8.0.*|8.1.*",
     "ext-json": "*",
     "ext-pdo": "*",
-    "doctrine/dbal": "^2.13"
+    "doctrine/dbal": "^2.13|^3.4"
   },
 
   "require-dev": {
