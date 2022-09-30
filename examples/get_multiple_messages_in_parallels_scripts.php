@@ -7,6 +7,8 @@
  * file that was distributed with this source code.
  */
 
+declare(strict_types=1);
+
 namespace PhpMqdb\Examples;
 
 use PhpMqdb\Client;
@@ -14,7 +16,6 @@ use PhpMqdb\Config\TableConfig;
 use PhpMqdb\Filter;
 use PhpMqdb\Message\MessageFactory;
 use PhpMqdb\Query\QueryBuilderFactory;
-use PhpMqdb\Repository\PDOMessageRepository;
 
 $time = -microtime(true);
 $messageList = [];
@@ -50,7 +51,7 @@ exit(0);
 child:
 
 require_once __DIR__ . '/../vendor/autoload.php';
-$dbConf = require_once __DIR__ . '/config.php';
+$repository = require_once __DIR__ . '/_init_pdo_repository.php';
 
 //~ Table Config
 $tableConfig = new TableConfig();
@@ -76,12 +77,7 @@ $tableConfig->setOrders([
 $messageFactory      = new MessageFactory($tableConfig);
 $queryBuilderFactory = new QueryBuilderFactory($tableConfig);
 
-//~ Connection
-$connection = new \PDO($dbConf->dsn, $dbConf->user, $dbConf->pass, $dbConf->opts);
-$connection->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
-
-//~ Repository
-$repository = new PDOMessageRepository($connection);
+//~ Repository factories
 $repository->setMessageFactory($messageFactory);
 $repository->setQueryBuilderFactory($queryBuilderFactory);
 

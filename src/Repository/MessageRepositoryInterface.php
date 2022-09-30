@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 /*
  * Copyright Romain Cottard
@@ -70,7 +72,7 @@ interface MessageRepositoryInterface
      * @param  Filter $filter
      * @return MessageInterface[]
      */
-    public function getMessages(Filter $filter): iterable;
+    public function getMessages(Filter $filter): array;
 
     /**
      * Count messages based on given context

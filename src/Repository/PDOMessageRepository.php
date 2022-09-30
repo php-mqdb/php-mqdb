@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 /*
  * Copyright Romain Cottard
@@ -18,8 +20,7 @@ use PhpMqdb\Query\QueryBuilder;
  */
 class PDOMessageRepository extends AbstractDatabaseMessageRepository
 {
-    /** @var \PDO $connection */
-    private $connection = null;
+    private \PDO $connection;
 
     /**
      * PDOMessageRepository constructor.

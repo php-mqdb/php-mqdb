@@ -1,4 +1,4 @@
-<?php declare(strict_types=1);
+<?php
 
 /*
  * Copyright Romain Cottard
@@ -7,12 +7,15 @@
  * file that was distributed with this source code.
  */
 
+declare(strict_types=1);
+
 namespace PhpMqdb\Repository;
 
 use Doctrine\DBAL\Connection;
-use Doctrine\DBAL\Driver\Statement;
+use Doctrine\DBAL\Driver\Exception;
 use Doctrine\DBAL\Exception\DeadlockException;
 use Doctrine\DBAL\Exception\DriverException;
+use Doctrine\DBAL\Result;
 use PhpMqdb\Query\QueryBuilder;
 
 /**
@@ -22,8 +25,7 @@ use PhpMqdb\Query\QueryBuilder;
  */
 class DBALMessageRepository extends AbstractDatabaseMessageRepository
 {
-    /** @var Connection $connection */
-    private $connection = null;
+    private Connection $connection;
 
     /**
      * AbstractDatabaseMessageRepository constructor.
@@ -37,8 +39,9 @@ class DBALMessageRepository extends AbstractDatabaseMessageRepository
 
     /**
      * @param QueryBuilder $queryBuilder
-     * @return Statement
+     * @return Result
      * @throws \Exception
+     * @throws Exception
      */
     protected function executeQuery(QueryBuilder $queryBuilder)
     {
@@ -48,12 +51,11 @@ class DBALMessageRepository extends AbstractDatabaseMessageRepository
         $stmt  = $this->connection->prepare($query);
 
         try {
-            @$stmt->execute($bind);
+            $result = @$stmt->executeQuery($bind);
         } catch (DriverException | DeadlockException $exception) {
-
             // Keep SQLState HY000 with ErrorCode 2006 (MySQL server has gone away)
             // And SQLState 40001 (Serialization failure: Deadlock found when trying to get lock)
-            if ($exception->getErrorCode() !== 2006 || !in_array($exception->getSQLState(), ['HY000', '40001'])) {
+            if ($exception->getCode() !== 2006 || !in_array($exception->getSQLState(), ['HY000', '40001'])) {
                 throw $exception;
             }
 
@@ -62,9 +64,9 @@ class DBALMessageRepository extends AbstractDatabaseMessageRepository
 
             $this->connection->close();
             $stmt = $this->connection->prepare($query);
-            $stmt->execute($bind);
+            $result = $stmt->executeQuery($bind);
         }
 
-        return $stmt;
+        return $result;
     }
 }

@@ -1,4 +1,4 @@
-<?php declare(strict_types=1);
+<?php
 
 /*
  * Copyright Romain Cottard
@@ -6,6 +6,8 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
+
+declare(strict_types=1);
 
 namespace PhpMqdb;
 
@@ -19,72 +21,48 @@ use PhpMqdb\Enumerator;
  */
 class Filter
 {
-    /** @var int $offset */
-    private $offset = 0;
-
-    /** @var int $maxLimit */
-    private $maxLimit = 0;
-
-    /** @var int $limit */
-    private $limit = 1;
+    private const DATE_FORMAT_SQL = 'Y-m-d H:i:s';
+    private int $offset = 0;
+    private int $maxLimit = 0;
+    private int $limit = 1;
+    private string $topic = '';
 
     /** @var int[] $statuses */
-    private $statuses = [Enumerator\Status::IN_QUEUE];
+    private array $statuses = [Enumerator\Status::IN_QUEUE];
 
     /** @var int[] $priorities */
-    private $priorities = [];
+    private array $priorities = [];
 
-    /** @var int $topic */
-    private $topic = '';
-
-    /** @var string|null $entityId */
-    private $entityId = null;
+    private ?string $entityId = null;
 
     /** @var string|null $dateExpiration Format: Y-m-d H:i:s */
-    private $dateTimeCurrent = null;
+    private ?string $dateTimeCurrent = null;
 
-    /** @var string $dateAvailability Format: Y-m-d H:i:s */
-    private $dateTimeAvailability = null;
+    /** @var string|null $dateAvailability Format: Y-m-d H:i:s */
+    private ?string $dateTimeAvailability = null;
 
     /** @var string|null $dateExpiration Format: Y-m-d H:i:s */
-    private $dateTimeExpiration = null;
+    private ?string $dateTimeExpiration = null;
 
-    /**
-     * Filter constructor.
-     *
-     * @param  int $maxLimit
-     */
-    public function __construct($maxLimit = 1000)
+    public function __construct(int $maxLimit = 1000)
     {
         //~ Set current UTC date time (based on current timestamp)
-        $this->setDateTimeCurrent((string) date('Y-m-d H:i:s', time()));
+        $this->setDateTimeCurrent((string) date(self::DATE_FORMAT_SQL, time()));
 
         $this->setMaxLimit($maxLimit);
     }
 
-    /**
-     * Get offset filter.
-     *
-     * @return int
-     */
     public function getOffset(): int
     {
         return $this->offset;
     }
 
-    /**
-     * Get limit filter.
-     *
-     * @return int
-     */
     public function getLimit(): int
     {
         return $this->limit;
     }
 
     /**
-     * Get priorities filter.
-     *
      * @return int[]
      */
     public function getPriorities(): array
@@ -93,8 +71,6 @@ class Filter
     }
 
     /**
-     * Get statuses filter.
-     *
      * @return int[]
      */
     public function getStatuses(): array
@@ -102,51 +78,26 @@ class Filter
         return $this->statuses;
     }
 
-    /**
-     * Get topic filter.
-     *
-     * @return string
-     */
     public function getTopic(): string
     {
         return $this->topic;
     }
 
-    /**
-     * Return current date time.
-     *
-     * @return string
-     */
-    public function getDateTimeCurrent(): string
+    public function getDateTimeCurrent(): ?string
     {
         return $this->dateTimeCurrent;
     }
 
-    /**
-     * Return date of availability.
-     *
-     * @return string
-     */
     public function getDateTimeAvailability(): ?string
     {
         return $this->dateTimeAvailability;
     }
 
-    /**
-     * Return date of expiration.
-     *
-     * @return string
-     */
     public function getDateTimeExpiration(): ?string
     {
         return $this->dateTimeExpiration;
     }
 
-    /**
-     * Return entity id.
-     *
-     * @return string|null
-     */
     public function getEntityId(): ?string
     {
         return $this->entityId;
@@ -162,8 +113,6 @@ class Filter
      */
     public function setLimit(int $limit): self
     {
-        $limit = (int) $limit;
-
         if ($limit < 1) {
             throw new \UnderflowException('Limit must be greater than 0!');
         }
@@ -186,8 +135,6 @@ class Filter
      */
     public function setOffset(int $offset): self
     {
-        $offset = (int) $offset;
-
         if ($offset < 0) {
             throw new \UnderflowException('Offset must be equals or greater than 0!');
         }
@@ -264,13 +211,11 @@ class Filter
      */
     public function setTopic(string $topic): self
     {
-        $topic = (string) $topic;
-
         if (empty($topic)) {
             throw new \RuntimeException('Topic filter given cannot be empty!');
         }
 
-        if (!(bool) preg_match('`^([a-z0-9_]+\.)*([a-z0-9_]+|\*{1})$`', $topic)) {
+        if (!(bool) preg_match('`^([a-z0-9_]+\.)*([a-z0-9_]+|\*)$`', $topic)) {
             throw new \RuntimeException('Topic filter must contain only alphanums, ".", "_" & "*" characters!');
         }
 
@@ -287,7 +232,7 @@ class Filter
      */
     public function setDateTimeCurrent(string $date): self
     {
-        $date = \DateTimeImmutable::createFromFormat('Y-m-d H:i:s', (string) $date, new \DateTimeZone('UTC'));
+        $date = \DateTimeImmutable::createFromFormat(self::DATE_FORMAT_SQL, $date, new \DateTimeZone('UTC'));
 
         if (!$date instanceof \DateTimeImmutable) {
             throw new \RuntimeException();
@@ -306,13 +251,13 @@ class Filter
      */
     public function setDateTimeAvailability(string $date): self
     {
-        $date = \DateTimeImmutable::createFromFormat('Y-m-d H:i:s', (string) $date, new \DateTimeZone('UTC'));
+        $date = \DateTimeImmutable::createFromFormat(self::DATE_FORMAT_SQL, $date, new \DateTimeZone('UTC'));
 
         if (!$date instanceof \DateTimeImmutable) {
             throw new \RuntimeException();
         }
 
-        $this->dateTimeAvailability = $date->format('Y-m-d H:i:s');
+        $this->dateTimeAvailability = $date->format(self::DATE_FORMAT_SQL);
 
         return $this;
     }
@@ -327,7 +272,7 @@ class Filter
     public function setDateTimeExpiration(string $date): self
     {
         $utcTimezone = new \DateTimeZone('UTC');
-        $date        = \DateTimeImmutable::createFromFormat('Y-m-d H:i:s', (string) $date, $utcTimezone);
+        $date        = \DateTimeImmutable::createFromFormat(self::DATE_FORMAT_SQL, $date, $utcTimezone);
 
         if (!$date instanceof \DateTimeImmutable) {
             throw new \RuntimeException();
@@ -338,7 +283,7 @@ class Filter
             throw new \UnderflowException('Expiration date time is prior to the current date time!');
         }
 
-        $this->dateTimeExpiration = $date->format('Y-m-d H:i:s');
+        $this->dateTimeExpiration = $date->format(self::DATE_FORMAT_SQL);
 
         return $this;
     }
@@ -351,8 +296,6 @@ class Filter
      */
     private function setMaxLimit(int $limit): self
     {
-        $limit = (int) $limit;
-
         if ($limit < 1) {
             throw new \UnderflowException('Max Limit must be greater than 0!');
         }
