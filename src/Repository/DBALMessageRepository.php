@@ -11,6 +11,7 @@ namespace PhpMqdb\Repository;
 
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Driver\Statement;
+use Doctrine\DBAL\Exception\DeadlockException;
 use Doctrine\DBAL\Exception\DriverException;
 use PhpMqdb\Query\QueryBuilder;
 
@@ -48,12 +49,16 @@ class DBALMessageRepository extends AbstractDatabaseMessageRepository
 
         try {
             @$stmt->execute($bind);
-        } catch (DriverException $exception) {
+        } catch (DriverException | DeadlockException $exception) {
 
-            // Only keep SQLState HY000 with ErrorCode 2006 (MySQL server has gone away)
-            if ($exception->getErrorCode() !== 2006 || $exception->getSQLState() !== 'HY000') {
+            // Keep SQLState HY000 with ErrorCode 2006 (MySQL server has gone away)
+            // And SQLState 40001 (Serialization failure: Deadlock found when trying to get lock)
+            if ($exception->getErrorCode() !== 2006 || !in_array($exception->getSQLState(), ['HY000', '40001'])) {
                 throw $exception;
             }
+
+            // Sleep between 25 & 100ms before retrying to prevent connections to retry at same time
+            usleep(mt_rand(25000, 100000));
 
             $this->connection->close();
             $stmt = $this->connection->prepare($query);
