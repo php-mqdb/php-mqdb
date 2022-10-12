@@ -38,10 +38,10 @@ $client = new Client($repository);
 $date = new \DateTimeImmutable();
 
 //~ Publish messages
-for($index = 1; $index <= 200000; $index++) {
+for ($index = 1; $index <= 200000; $index++) {
     echo 'process ' . $index . "\r";
 
-    $interval = new \DateInterval('PT' . rand(0,10) . 'M' . rand(0, 59) . 'S');
+    $interval = new \DateInterval('PT' . rand(0, 10) . 'M' . rand(0, 59) . 'S');
 
     $content = new \stdClass();
     $content->id    = (string) $index;
@@ -49,7 +49,7 @@ for($index = 1; $index <= 200000; $index++) {
 
     $message = new Message\MessageJson('publish.content', $content);
     $message->setEntityId($content->id);
-    $message->setPriority(rand(Enumerator\Priority::VERY_HIGH,Enumerator\Priority::VERY_LOW));
+    $message->setPriority(rand(Enumerator\Priority::VERY_HIGH, Enumerator\Priority::VERY_LOW));
     $message->setDateAvailability($date->add($interval)->format('Y-m-d H:i:s'));
 
     $client->publish($message);

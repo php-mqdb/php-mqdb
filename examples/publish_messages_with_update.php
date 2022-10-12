@@ -67,7 +67,7 @@ $client->publishOrUpdateEntityMessage($messageUpdated);
 $contentUpdated = json_decode($messageUpdated->getContent());
 echo 'Message should have content with filter value "2": ' . $contentUpdated->filter . PHP_EOL;
 
-$callbackMerge = function(Message\MessageInterface $existingMessage, Message\MessageInterface $message)
+$callbackMerge = function (Message\MessageInterface $existingMessage, Message\MessageInterface $message)
 {
     $oldContent = json_decode($existingMessage->getContent());
     $newContent = json_decode($message->getContent());
