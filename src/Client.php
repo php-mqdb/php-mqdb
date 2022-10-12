@@ -7,6 +7,8 @@
  * file that was distributed with this source code.
  */
 
+declare(strict_types=1);
+
 namespace PhpMqdb;
 
 use PhpMqdb\Repository\MessageRepositoryInterface;
@@ -19,10 +21,7 @@ use PhpMqdb\Message;
  */
 class Client
 {
-    /**
-     * @var MessageRepositoryInterface $messageRepository
-     */
-    private $messageRepository = null;
+    private MessageRepositoryInterface $messageRepository;
 
     /**
      * Client constructor.
@@ -40,7 +39,7 @@ class Client
      * @param  string $id
      * @return $this
      */
-    public function ack($id)
+    public function ack(string $id): self
     {
         $this->messageRepository->ack($id);
 
@@ -54,7 +53,7 @@ class Client
      * @param  bool $requeue
      * @return $this
      */
-    public function nack($id, $requeue = true)
+    public function nack(string $id, bool $requeue = true): self
     {
         $this->messageRepository->nack($id, $requeue);
 
@@ -67,7 +66,7 @@ class Client
      * @param  Filter $filter
      * @return Message\MessageInterface
      */
-    public function getMessage(Filter $filter)
+    public function getMessage(Filter $filter): ?Message\MessageInterface
     {
         return $this->messageRepository->getMessage($filter);
     }
@@ -78,7 +77,7 @@ class Client
      * @param  Filter $filter
      * @return Message\MessageInterface[]
      */
-    public function getMessages(Filter $filter)
+    public function getMessages(Filter $filter): array
     {
         return $this->messageRepository->getMessages($filter);
     }
@@ -89,7 +88,7 @@ class Client
      * @param Filter $filter
      * @return int
      */
-    public function countMessages(Filter $filter)
+    public function countMessages(Filter $filter): int
     {
         return $this->messageRepository->countMessages($filter);
     }
@@ -100,7 +99,7 @@ class Client
      * @param  Message\MessageInterface $message
      * @return $this
      */
-    public function publish(Message\MessageInterface $message)
+    public function publish(Message\MessageInterface $message): self
     {
         $this->messageRepository->publishMessage($message);
 
@@ -119,8 +118,10 @@ class Client
      * @throws Exception\EmptySetValuesException
      * @throws Exception\PhpMqdbConfigurationException
      */
-    public function publishOrUpdateEntityMessage(Message\MessageInterface $message, ?callable $mergeCallback = null)
-    {
+    public function publishOrUpdateEntityMessage(
+        Message\MessageInterface $message,
+        ?callable $mergeCallback = null
+    ): self {
         $this->messageRepository->publishOrUpdateEntityMessage($message, $mergeCallback);
 
         return $this;
@@ -134,7 +135,7 @@ class Client
      * @throws Exception\EmptySetValuesException
      * @throws Exception\PhpMqdbConfigurationException
      */
-    public function publishOrSkipEntityMessage(Message\MessageInterface $message)
+    public function publishOrSkipEntityMessage(Message\MessageInterface $message): self
     {
         $this->messageRepository->publishOrSkipEntityMessage($message);
 
@@ -149,7 +150,7 @@ class Client
      * @param  \DateInterval $interval
      * @return $this
      */
-    public function cleanPendingMessages(\DateInterval $interval)
+    public function cleanPendingMessages(\DateInterval $interval): self
     {
         $this->messageRepository->cleanPendingMessages($interval);
 
@@ -164,7 +165,7 @@ class Client
      * @param  \DateInterval $interval
      * @return $this
      */
-    public function replayPendingMessages(\DateInterval $interval)
+    public function replayPendingMessages(\DateInterval $interval): self
     {
         $this->messageRepository->resetPendingMessages($interval);
 
@@ -178,8 +179,10 @@ class Client
      * @param  int $bitmaskDelete
      * @return $this
      */
-    public function cleanMessages(\DateInterval $interval, $bitmaskDelete = MessageRepositoryInterface::DELETE_SAFE)
-    {
+    public function cleanMessages(
+        \DateInterval $interval,
+        int $bitmaskDelete = MessageRepositoryInterface::DELETE_SAFE
+    ): self {
         $this->messageRepository->cleanMessages($interval, $bitmaskDelete);
 
         return $this;

@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 /*
  * Copyright (c) Romain Cottard
@@ -25,16 +27,16 @@ use PhpMqdb\Repository\MessageRepositoryInterface;
 class QueryBuilder
 {
     /** @var TableConfig $tableConfig */
-    private $tableConfig;
+    private TableConfig $tableConfig;
 
     /** @var string $query */
-    protected $query = '';
+    protected string $query = '';
 
-    /** @var mixed[] $bind */
-    protected $bind = [];
+    /** @var array<string, int|string|null> $bind */
+    protected array $bind = [];
 
     /** @var string[] $where */
-    private $where = [];
+    private array $where = [];
 
     /**
      * QueryBuilder constructor.
@@ -55,7 +57,7 @@ class QueryBuilder
     }
 
     /**
-     * @return array
+     * @return array<string, int|string|null>
      */
     public function getBind(): array
     {
@@ -124,28 +126,28 @@ class QueryBuilder
     }
 
     /**
-     * @param int $deleteBitmask
+     * @param int $bitmaskDelete
      * @param string $date
      * @return QueryBuilder
      * @throws \Exception
      */
-    public function buildQueryClean(int $deleteBitmask, string $date): self
+    public function buildQueryClean(int $bitmaskDelete, string $date): self
     {
         $status = [];
 
-        if (($deleteBitmask & MessageRepositoryInterface::DELETE_ACK_RECEIVED) === MessageRepositoryInterface::DELETE_ACK_RECEIVED) {
+        if (($bitmaskDelete & MessageRepositoryInterface::DELETE_ACK_RECEIVED) === MessageRepositoryInterface::DELETE_ACK_RECEIVED) {
             $status[':status_ack'] = Enumerator\Status::ACK_RECEIVED;
         }
 
-        if (($deleteBitmask & MessageRepositoryInterface::DELETE_NACK_RECEIVED) === MessageRepositoryInterface::DELETE_NACK_RECEIVED) {
+        if (($bitmaskDelete & MessageRepositoryInterface::DELETE_NACK_RECEIVED) === MessageRepositoryInterface::DELETE_NACK_RECEIVED) {
             $status[':status_nack'] = Enumerator\Status::NACK_RECEIVED;
         }
 
-        if (($deleteBitmask & MessageRepositoryInterface::DELETE_ACK_NOT_RECEIVED) === MessageRepositoryInterface::DELETE_ACK_NOT_RECEIVED) {
+        if (($bitmaskDelete & MessageRepositoryInterface::DELETE_ACK_NOT_RECEIVED) === MessageRepositoryInterface::DELETE_ACK_NOT_RECEIVED) {
             $status[':status_ackn'] = Enumerator\Status::ACK_NOT_RECEIVED;
         }
 
-        if (($deleteBitmask & MessageRepositoryInterface::DELETE_ACK_PENDING) === MessageRepositoryInterface::DELETE_ACK_PENDING) {
+        if (($bitmaskDelete & MessageRepositoryInterface::DELETE_ACK_PENDING) === MessageRepositoryInterface::DELETE_ACK_PENDING) {
             $status[':status_ackp'] = Enumerator\Status::ACK_PENDING;
         }
 
@@ -301,7 +303,7 @@ class QueryBuilder
 
     /**
      * @param string $field
-     * @param $value
+     * @param string|int|null $value
      * @param string $sign
      * @param bool $orNull
      * @return QueryBuilder
@@ -322,7 +324,7 @@ class QueryBuilder
 
     /**
      * @param string $field
-     * @param array $values
+     * @param array<string|int|null> $values
      * @return QueryBuilder
      * @throws PhpMqdbConfigurationException
      */
@@ -330,10 +332,6 @@ class QueryBuilder
     {
         if (empty($values)) {
             return $this;
-        }
-
-        if (!is_array($values)) {
-            throw new \InvalidArgumentException('Values must be an array of value to filter.');
         }
 
         //~ When have only one value, use normal addWhere method
@@ -483,7 +481,7 @@ class QueryBuilder
     /**
      * Build query order.
      *
-     * @param array $order
+     * @param array<string, string> $order
      * @param Filter|null $filter
      * @return string
      * @throws PhpMqdbConfigurationException
@@ -493,14 +491,13 @@ class QueryBuilder
         $orderBy = [];
 
         foreach ($order as $field => $direction) {
-
-            //~ Skip ordering by priority when have an unique priority
-            if ($field === 'priority' && count($filter->getPriorities()) === 1) {
+            //~ Skip ordering by priority when have a unique priority
+            if ($field === 'priority' && $filter !== null && count($filter->getPriorities()) === 1) {
                 continue;
             }
 
             //~ Skip ordering by priority when have an unique priority
-            if ($field === 'status' && count($filter->getStatuses()) === 1) {
+            if ($field === 'status' && $filter !== null && count($filter->getStatuses()) === 1) {
                 continue;
             }
 

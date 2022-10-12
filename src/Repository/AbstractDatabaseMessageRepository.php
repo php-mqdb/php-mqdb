@@ -1,4 +1,4 @@
-<?php declare(strict_types=1);
+<?php
 
 /*
  * Copyright Romain Cottard
@@ -7,12 +7,16 @@
  * file that was distributed with this source code.
  */
 
+declare(strict_types=1);
+
 namespace PhpMqdb\Repository;
 
-use Doctrine\DBAL\Driver\Statement;
+use Doctrine\DBAL\Driver\Exception;
+use Doctrine\DBAL\Result;
 use PhpMqdb\Enumerator;
 use PhpMqdb\Exception\EmptySetValuesException;
 use PhpMqdb\Exception\PhpMqdbConfigurationException;
+use PhpMqdb\Exception\PhpMqdbException;
 use PhpMqdb\Filter;
 use PhpMqdb\Message;
 use PhpMqdb\Message\MessageInterface;
@@ -26,17 +30,14 @@ use PhpMqdb\Query\QueryBuilderFactory;
  */
 abstract class AbstractDatabaseMessageRepository implements MessageRepositoryInterface
 {
-    /** @var Message\MessageFactoryInterface $messageFactory */
-    private $messageFactory;
-
-    /** @var QueryBuilderFactory $queryBuilderFactory */
-    private $queryBuilderFactory;
+    private Message\MessageFactoryInterface $messageFactory;
+    private QueryBuilderFactory $queryBuilderFactory;
 
     /**
      * Run a query
      *
      * @param QueryBuilder $queryBuilder
-     * @return \PDOStatement|Statement
+     * @return \PDOStatement|Result
      */
     abstract protected function executeQuery(QueryBuilder $queryBuilder);
 
@@ -45,7 +46,7 @@ abstract class AbstractDatabaseMessageRepository implements MessageRepositoryInt
      *
      * @param QueryBuilderFactory $queryBuilderFactory
      */
-    public function setQueryBuilderFactory(QueryBuilderFactory $queryBuilderFactory)
+    public function setQueryBuilderFactory(QueryBuilderFactory $queryBuilderFactory): void
     {
         $this->queryBuilderFactory = $queryBuilderFactory;
     }
@@ -109,6 +110,7 @@ abstract class AbstractDatabaseMessageRepository implements MessageRepositoryInt
      * @param Filter $filter
      * @return Message\MessageInterface|null
      * @throws PhpMqdbConfigurationException
+     * @throws Exception
      */
     public function getMessage(Filter $filter): ?Message\MessageInterface
     {
@@ -131,17 +133,23 @@ abstract class AbstractDatabaseMessageRepository implements MessageRepositoryInt
      * @return Message\MessageInterface[]
      * @throws PhpMqdbConfigurationException
      * @throws \Exception
+     * @throws Exception
      */
-    public function getMessages(Filter $filter): iterable
+    public function getMessages(Filter $filter): array
     {
         $messages = [];
 
         $queryBuilder = $this->getQueryBuilder();
 
-        $stmt = $this->executeQuery($queryBuilder->buildQueryGet($filter, $this->protectMessages($filter)));
+        $stmt    = $this->executeQuery($queryBuilder->buildQueryGet($filter, $this->protectMessages($filter)));
+        $results = $stmt instanceof Result ? $stmt->fetchAllAssociative() : $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
-        while (null != ($row = $stmt->fetch(\PDO::FETCH_OBJ))) {
+        if ($results === false) {
+            throw new PhpMqdbException('Unable to fetch message!');
+        }
 
+        foreach ($results as $row) {
+            $row     = (object) $row;
             $message = $this->messageFactory->create($row);
 
             $messages[] = $message;
@@ -154,22 +162,26 @@ abstract class AbstractDatabaseMessageRepository implements MessageRepositoryInt
      * @param Filter $filter
      * @return int
      * @throws PhpMqdbConfigurationException
+     * @throws Exception
      */
     public function countMessages(Filter $filter): int
     {
         $stmt = $this->executeQuery($this->getQueryBuilder()->buildQueryCount($filter));
 
-        return (int) $stmt->fetchColumn();
+        /** @var int|string $nbMessage */
+        $nbMessage = ($stmt instanceof Result ? $stmt->fetchOne() : $stmt->fetch(\PDO::FETCH_COLUMN));
+        return (int) $nbMessage;
     }
 
     /**
      * Publish message in queue.
      *
-     * @param  MessageInterface $message
-     * @param  bool $allowStatusUpdate Should status of messages be change on update or not (default false)
+     * @param MessageInterface $message
+     * @param bool $allowStatusUpdate Should status of messages be change on update or not (default false)
      * @return MessageRepositoryInterface
      * @throws EmptySetValuesException
      * @throws PhpMqdbConfigurationException
+     * @throws \Exception
      */
     public function publishMessage(Message\MessageInterface $message, bool $allowStatusUpdate = false): MessageRepositoryInterface
     {
@@ -177,7 +189,7 @@ abstract class AbstractDatabaseMessageRepository implements MessageRepositoryInt
 
         $isNew = false;
         if (empty($message->getId())) {
-            $message->setId($this->generateId(4));
+            $message->setId($this->generateId());
             $isNew = true;
         }
 
@@ -195,7 +207,7 @@ abstract class AbstractDatabaseMessageRepository implements MessageRepositoryInt
      * @return MessageRepositoryInterface
      * @throws EmptySetValuesException
      * @throws PhpMqdbConfigurationException
-     * @throws \Exception
+     * @throws \Exception|Exception
      */
     public function publishOrUpdateEntityMessage(
         Message\MessageInterface $message,
@@ -229,7 +241,7 @@ abstract class AbstractDatabaseMessageRepository implements MessageRepositoryInt
      * @return MessageRepositoryInterface
      * @throws EmptySetValuesException
      * @throws PhpMqdbConfigurationException
-     * @throws \Exception
+     * @throws \Exception|Exception
      */
     public function publishOrSkipEntityMessage(Message\MessageInterface $message): MessageRepositoryInterface
     {
@@ -239,9 +251,11 @@ abstract class AbstractDatabaseMessageRepository implements MessageRepositoryInt
 
         $filterExisting = new Filter();
         $filterExisting->setEntityId($message->getEntityId())->setTopic($message->getTopic());
-        $stmt = $this->executeQuery($this->getQueryBuilder()->buildQueryCountExisting($filterExisting));
-        $count = (int) $stmt->fetchColumn();
-        if ($count > 0) {
+        $stmt  = $this->executeQuery($this->getQueryBuilder()->buildQueryCountExisting($filterExisting));
+
+        /** @var int|string $count */
+        $count = $stmt instanceof Result ? $stmt->fetchOne() : $stmt->fetch(\PDO::FETCH_COLUMN);
+        if ((int) $count > 0) {
             return $this;
         }
 
@@ -250,16 +264,16 @@ abstract class AbstractDatabaseMessageRepository implements MessageRepositoryInt
 
     /**
      * @param \DateInterval $interval
-     * @param int $deleteBitmask
+     * @param int $bitmaskDelete
      * @return MessageRepositoryInterface
      * @throws \Exception
      */
     public function cleanMessages(
         \DateInterval $interval,
-        int $deleteBitmask = self::DELETE_SAFE
+        int $bitmaskDelete = self::DELETE_SAFE
     ): MessageRepositoryInterface {
         $queryBuilder = $this->getQueryBuilder();
-        $this->executeQuery($queryBuilder->buildQueryClean($deleteBitmask, $this->getRelativeDate($interval)));
+        $this->executeQuery($queryBuilder->buildQueryClean($bitmaskDelete, $this->getRelativeDate($interval)));
 
         return $this;
     }
@@ -307,7 +321,7 @@ abstract class AbstractDatabaseMessageRepository implements MessageRepositoryInt
             ->setDateAvailability($existingMessage->getDateAvailability()) // Keep previous availability
             ->setPriority(
                 min($message->getPriority(), $existingMessage->getPriority())
-            ) // We keep the highest priority (ie lowest value)
+            ) // We keep the highest priority (ie the lowest value)
             ->setDateUpdate($this->getRelativeDate())
         ;
 
@@ -320,6 +334,7 @@ abstract class AbstractDatabaseMessageRepository implements MessageRepositoryInt
      * @param Filter $filter
      * @return string
      * @throws PhpMqdbConfigurationException
+     * @throws \Exception
      */
     private function protectMessages(Filter $filter): string
     {

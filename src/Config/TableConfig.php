@@ -1,4 +1,4 @@
-<?php declare(strict_types=1);
+<?php
 
 /*
  * Copyright (c) Romain Cottard
@@ -6,6 +6,8 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
+
+declare(strict_types=1);
 
 namespace PhpMqdb\Config;
 
@@ -18,11 +20,10 @@ use PhpMqdb\Exception\PhpMqdbConfigurationException;
  */
 final class TableConfig
 {
-    /** @var string $table */
-    private $table = 'message_queue';
+    private string $table = 'message_queue';
 
     /** @var string[] $fields */
-    private $fields = [
+    private array $fields = [
         'id'                => 'message_id',
         'status'            => 'message_status',
         'priority'          => 'message_priority',
@@ -38,8 +39,8 @@ final class TableConfig
         'date_availability' => 'message_date_availability',
     ];
 
-    /** @var array $orders */
-    private $orders = [
+    /** @var string[] $orders */
+    private array $orders = [
         'priority'          => 'ASC',
         'date_availability' => 'ASC',
         'date_create'       => 'ASC',
@@ -66,7 +67,7 @@ final class TableConfig
     }
 
     /**
-     * @param array $fields
+     * @param string[] $fields
      * @return TableConfig
      * @throws PhpMqdbConfigurationException
      */
@@ -86,7 +87,7 @@ final class TableConfig
     }
 
     /**
-     * @param array $fields
+     * @param string[] $fields
      * @return TableConfig
      * @throws PhpMqdbConfigurationException
      */

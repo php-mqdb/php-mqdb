@@ -1,4 +1,4 @@
-<?php declare(strict_types=1);
+<?php
 
 /*
  * Copyright (c) Romain Cottard
@@ -6,6 +6,8 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
+
+declare(strict_types=1);
 
 namespace PhpMqdb\Message;
 
@@ -20,7 +22,7 @@ class MessageJson extends Message
      * MessageJson constructor.
      *
      * @param string|null $topic
-     * @param null $content
+     * @param mixed|null $content
      * @param bool $forceJsonEncode
      * @throws \Exception
      */
@@ -41,6 +43,11 @@ class MessageJson extends Message
             if ($forceJsonEncode) {
                 $content = json_encode($content);
             }
+
+            if (is_object($content) || is_array($content)) {
+                throw new \RuntimeException('Cannot set content, it is not a scalar value!');
+            }
+            /** @var string|int|float|null|bool $content */
             $this->setContent((string) $content);
         }
     }

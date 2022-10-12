@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 /*
  * Copyright (c) Romain Cottard
@@ -18,106 +20,38 @@ use PhpMqdb\Enumerator;
  */
 trait MessageTrait
 {
-    /**
-     * @var string $id
-     */
-    protected $id = '';
+    protected string $id = '';
+    protected int $status = Enumerator\Status::IN_QUEUE;
+    protected int $priority = Enumerator\Priority::MEDIUM;
+    protected string $topic = '';
+    protected string $content = '';
+    protected string $contentType = 'text';
+    protected ?string $entityId = null;
+    protected ?string $dateExpiration = null;
+    protected ?string $dateAvailability = null;
+    protected string $dateCreate = '0000-00-00 00:00:00';
+    protected ?string $dateUpdate = null;
 
-    /**
-     * @var int $status
-     */
-    protected $status = Enumerator\Status::IN_QUEUE;
-
-    /**
-     * @var int $priority
-     */
-    protected $priority = Enumerator\Priority::MEDIUM;
-
-    /**
-     * @var string $topic
-     */
-    protected $topic = '';
-
-    /**
-     * @var string $content
-     */
-    protected $content = '';
-
-    /**
-     * @var string $contentType
-     */
-    protected $contentType = 'text';
-
-    /**
-     * @var string $entityId
-     */
-    protected $entityId = null;
-
-    /**
-     * @var string $dateExpiration
-     */
-    protected $dateExpiration = null;
-
-    /**
-     * @var string $dateAvailability
-     */
-    protected $dateAvailability = null;
-
-    /**
-     * @var string $dateCreate
-     */
-    protected $dateCreate = '0000-00-00 00:00:00';
-
-    /**
-     * @var string $dateUpdate
-     */
-    protected $dateUpdate = null;
-
-    /**
-     * Get Message Identifier.
-     *
-     * @return string
-     */
     public function getId(): string
     {
         return $this->id;
     }
 
-    /**
-     * Get message status.
-     *
-     * @return int
-     */
     public function getStatus(): int
     {
         return $this->status;
     }
 
-    /**
-     * Get message priority.
-     *
-     * @return int
-     */
     public function getPriority(): int
     {
         return $this->priority;
     }
 
-    /**
-     * Get message topic.
-     *
-     * @return string
-     */
     public function getTopic(): string
     {
         return $this->topic;
     }
 
-    /**
-     * Get message content.
-     *
-     * @return string
-     */
     public function getContent(): string
     {
         return $this->content;
@@ -143,41 +77,21 @@ trait MessageTrait
         return $this->entityId;
     }
 
-    /**
-     * Get the expiration date of the message.
-     *
-     * @return string
-     */
     public function getDateExpiration(): ?string
     {
         return $this->dateExpiration;
     }
 
-    /**
-     * Get availability date of the message.
-     *
-     * @return string
-     */
     public function getDateAvailability(): ?string
     {
         return $this->dateAvailability;
     }
 
-    /**
-     * Get the creation date of the message.
-     *
-     * @return string
-     */
     public function getDateCreate(): string
     {
         return $this->dateCreate;
     }
 
-    /**
-     * Get the update date of the message.
-     *
-     * @return string
-     */
     public function getDateUpdate(): ?string
     {
         return $this->dateUpdate;
@@ -191,7 +105,7 @@ trait MessageTrait
      */
     public function setId(string $id): MessageInterface
     {
-        $this->id = (string) $id;
+        $this->id = $id;
 
         return $this;
     }
@@ -285,7 +199,7 @@ trait MessageTrait
     /**
      * Set Entity identifier linked to the message.
      *
-     * @param  string $entityId
+     * @param  string|null $entityId
      * @return MessageInterface
      */
     public function setEntityId(?string $entityId): MessageInterface
@@ -298,7 +212,7 @@ trait MessageTrait
     /**
      * Set the expiration date of the message.
      *
-     * @param  string $dateExpiration
+     * @param  string|null $dateExpiration
      * @return MessageInterface
      */
     public function setDateExpiration(?string $dateExpiration): MessageInterface
@@ -311,7 +225,7 @@ trait MessageTrait
     /**
      * Set availability date of the message.
      *
-     * @param  string $dateAvailability
+     * @param  string|null $dateAvailability
      * @return MessageInterface
      */
     public function setDateAvailability(?string $dateAvailability): MessageInterface
@@ -337,7 +251,7 @@ trait MessageTrait
     /**
      * Set the update date of the message.
      *
-     * @param  string $dateUpdate
+     * @param  string|null $dateUpdate
      * @return MessageInterface
      */
     public function setDateUpdate(?string $dateUpdate): MessageInterface

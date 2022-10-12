@@ -7,6 +7,8 @@
  * file that was distributed with this source code.
  */
 
+declare(strict_types=1);
+
 namespace PhpMqdb\Tests;
 
 use PhpMqdb\Filter;
@@ -16,12 +18,11 @@ use PHPUnit\Framework\TestCase;
 
 class FilterTest extends TestCase
 {
-    /**
-     * @expectedException \RuntimeException
-     * @expectedExceptionMessage Topic filter given cannot be empty!
-     */
-    public function testSetTopicEmptyValueThatThrowAnException()
+    public function testSetTopicEmptyValueThatThrowAnException(): void
     {
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('Topic filter given cannot be empty!');
+
         (new Filter())->setTopic('');
     }
 
@@ -30,7 +31,7 @@ class FilterTest extends TestCase
      *
      * @dataProvider validTopicsDataProvider
      */
-    public function testValidTopic($topic)
+    public function testValidTopic(string $topic): void
     {
         self::assertEquals($topic, (new Filter())->setTopic($topic)->getTopic(), $topic);
     }
@@ -39,34 +40,33 @@ class FilterTest extends TestCase
      * @param string $topic
      *
      * @dataProvider invalidTopicsDataProvider
-     * @expectedException \RuntimeException
-     * @expectedExceptionMessage Topic filter must contain only alphanums, ".", "_" & "*" characters!
      */
-    public function testInvalidTopicThatThrowAnException($topic)
+    public function testInvalidTopicThatThrowAnException(string $topic): void
     {
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('Topic filter must contain only alphanums, ".", "_" & "*" characters!');
+
         (new Filter())->setTopic($topic);
     }
 
-    /**
-     * @expectedException  \UnderflowException
-     */
-    public function testPriorityUnderflowException()
+    public function testPriorityUnderflowException(): void
     {
+        $this->expectException(\UnderflowException::class);
+
         (new Filter())->setPriorities([0]);
     }
 
-    /**
-     * @expectedException \OverflowException
-     */
-    public function testPriorityOverflowException()
+    public function testPriorityOverflowException(): void
     {
+        $this->expectException(\OverflowException::class);
+
         (new Filter())->setPriorities([6]);
     }
 
     /**
      * @return void
      */
-    public function testPriorityAllowedValue()
+    public function testPriorityAllowedValue(): void
     {
         $filter = new Filter();
 
@@ -75,28 +75,21 @@ class FilterTest extends TestCase
         self::assertEquals([Priority::VERY_HIGH], $filter->setPriorities([Priority::VERY_HIGH])->getPriorities());
     }
 
-    /**
-     * @return void
-     * @expectedException \UnderflowException
-     */
-    public function testStatusUnderflowException()
+    public function testStatusUnderflowException(): void
     {
+        $this->expectException(\UnderflowException::class);
+
         (new Filter())->setStatuses([-1]);
     }
 
-    /**
-     * @return void
-     * @expectedException \OverflowException
-     */
-    public function testStatusOverflowException()
+    public function testStatusOverflowException(): void
     {
+        $this->expectException(\OverflowException::class);
+
         (new Filter())->setStatuses([6]);
     }
 
-    /**
-     * @return void
-     */
-    public function testStatusAllowedValue()
+    public function testStatusAllowedValue(): void
     {
         $filter = new Filter();
 
@@ -107,18 +100,17 @@ class FilterTest extends TestCase
         self::assertEquals([Status::ACK_NOT_RECEIVED], $filter->setStatuses([Status::ACK_NOT_RECEIVED])->getStatuses());
     }
 
-    /**
-     * @expectedException \UnderflowException
-     */
-    public function testOffsetUnderflowException()
+    public function testOffsetUnderflowException(): void
     {
+        $this->expectException(\UnderflowException::class);
+
         (new Filter())->setOffset(-1);
     }
 
     /**
      * @return void
      */
-    public function testOffsetAllowedValue()
+    public function testOffsetAllowedValue(): void
     {
         $filter = new Filter();
 
@@ -130,10 +122,11 @@ class FilterTest extends TestCase
     /**
      * @return void
      * @throws \Exception
-     * @expectedException \RuntimeException
      */
-    public function testInvalidExpirationDateTime()
+    public function testInvalidExpirationDateTime(): void
     {
+        $this->expectException(\RuntimeException::class);
+
         $tomorrow = (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->add(new \DateInterval('P1D'));
         (new Filter())->setDateTimeExpiration($tomorrow->format('Y-m-d'));
     }
@@ -143,17 +136,18 @@ class FilterTest extends TestCase
      * @throws \Exception
      * @expectedException \UnderflowException
      */
-    public function testExpirationDateTimeIsPriorToCurrentDateTime()
+    public function testExpirationDateTimeIsPriorToCurrentDateTime(): void
     {
+        $this->expectException(\RuntimeException::class);
+
         $yesterday = (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->sub(new \DateInterval('P1D'));
         (new Filter())->setDateTimeExpiration($yesterday->format('Y-m-d H:i:s'));
     }
 
     /**
-     * @return void
      * @throws \Exception
      */
-    public function testExpirationDateTimeIsValid()
+    public function testExpirationDateTimeIsValid(): void
     {
         $tomorrow = (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->add(new \DateInterval('P1D'));
         $filter = (new Filter())->setDateTimeExpiration($tomorrow->format('Y-m-d H:i:s'));
@@ -162,21 +156,20 @@ class FilterTest extends TestCase
     }
 
     /**
-     * @return void
      * @throws \Exception
-     * @expectedException \RuntimeException
      */
-    public function testInvalidAvailabilityDateTime()
+    public function testInvalidAvailabilityDateTime(): void
     {
+        $this->expectException(\RuntimeException::class);
+
         $tomorrow = (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->add(new \DateInterval('P1D'));
         (new Filter())->setDateTimeAvailability($tomorrow->format('Y-m-d'));
     }
 
     /**
-     * @return void
      * @throws \Exception
      */
-    public function testAvailabilityDateTimeIsValid()
+    public function testAvailabilityDateTimeIsValid(): void
     {
         $tomorrow = (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->add(new \DateInterval('P1D'));
         $filter = (new Filter())->setDateTimeAvailability($tomorrow->format('Y-m-d H:i:s'));
@@ -184,26 +177,21 @@ class FilterTest extends TestCase
         self::assertEquals($tomorrow->format('Y-m-d H:i:s'), $filter->getDateTimeAvailability());
     }
 
-    /**
-     * @expectedException \UnderflowException
-     */
-    public function testLimitUnderflowException()
+    public function testLimitUnderflowException(): void
     {
+        $this->expectException(\UnderflowException::class);
+
         (new Filter())->setLimit(0);
     }
 
-    /**
-     * @expectedException \OverflowException
-     */
-    public function testLimitOverflowException()
+    public function testLimitOverflowException(): void
     {
+        $this->expectException(\OverflowException::class);
+
         (new Filter())->setLimit(1001); // Default limit is 1000
     }
 
-    /**
-     * @return void
-     */
-    public function testLimitAllowedValue()
+    public function testLimitAllowedValue(): void
     {
         $filter = new Filter();
 
@@ -212,10 +200,7 @@ class FilterTest extends TestCase
         self::assertEquals(1000, $filter->setLimit(1000)->getLimit());
     }
 
-    /**
-     * @return void
-     */
-    public function testLimitAllowedValueWithIncreasedDefaultMaxLimit()
+    public function testLimitAllowedValueWithIncreasedDefaultMaxLimit(): void
     {
         $filter = new Filter(10000);
 
@@ -223,20 +208,19 @@ class FilterTest extends TestCase
         self::assertEquals(10000, $filter->setLimit(10000)->getLimit());
     }
 
-    /**
-     * @expectedException \UnderflowException
-     */
-    public function testUnderflowMaxLimit()
+    public function testUnderflowMaxLimit(): void
     {
+        $this->expectException(\UnderflowException::class);
+
         (new Filter(0));
     }
 
     /**
      * Topic Data provider
      *
-     * @return array
+     * @return string[][]
      */
-    public function validTopicsDataProvider()
+    public function validTopicsDataProvider(): array
     {
         return [
             ['topic'],
@@ -254,9 +238,9 @@ class FilterTest extends TestCase
     /**
      * Topic Data provider
      *
-     * @return array
+     * @return string[][]
      */
-    public function invalidTopicsDataProvider()
+    public function invalidTopicsDataProvider(): array
     {
         return [
             ['topic.subtopic.'],
