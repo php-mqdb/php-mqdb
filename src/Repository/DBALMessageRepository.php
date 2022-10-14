@@ -55,7 +55,7 @@ class DBALMessageRepository extends AbstractDatabaseMessageRepository
         } catch (DriverException | DeadlockException $exception) {
             // Keep SQLState HY000 with ErrorCode 2006 (MySQL server has gone away)
             // And SQLState 40001 (Serialization failure: Deadlock found when trying to get lock)
-            if (!in_array($exception->getSQLState(), ['HY000', '40001']) || $exception->getCode() !== 2006) {
+            if (!in_array($exception->getCode(), [2006, 0]) || !in_array($exception->getSQLState(), ['HY000', '40001'])) {
                 throw $exception;
             }
 
