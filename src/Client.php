@@ -12,13 +12,7 @@ declare(strict_types=1);
 namespace PhpMqdb;
 
 use PhpMqdb\Repository\MessageRepositoryInterface;
-use PhpMqdb\Message;
 
-/**
- * Class Client
- *
- * @author Romain Cottard
- */
 class Client
 {
     private MessageRepositoryInterface $messageRepository;
@@ -64,7 +58,7 @@ class Client
      * Get message based on given context.
      *
      * @param  Filter $filter
-     * @return Message\MessageInterface
+     * @return Message\MessageInterface|null
      */
     public function getMessage(Filter $filter): ?Message\MessageInterface
     {

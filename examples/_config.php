@@ -14,7 +14,7 @@ namespace PhpMqdb\Examples;
 $dbConf         = new \stdClass();
 $dbConf->driver = 'mysql';
 $dbConf->name   = 'mqserver';
-$dbConf->host   = '127.0.0.1';
+$dbConf->host   = 'localhost';
 $dbConf->user   = 'user';
 $dbConf->pass   = 'pass';
 

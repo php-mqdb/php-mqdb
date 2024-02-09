@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 /*
  * Copyright Romain Cottard
  *
@@ -9,21 +7,20 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
+declare(strict_types=1);
+
 namespace PhpMqdb\Enumerator;
 
 /**
- * Class Status.
- * List of possible status for a message.
+ * List of possible content type for a message.
  *  text: message content without specification format (default)
  *  json: message content with json formatting
- *
- * @author Romain Cottard
  */
 class ContentType
 {
     /** @var string TEXT Message content is a text (default value) */
-    const TEXT = 'text';
+    public const TEXT = 'text';
 
     /** @var string JSON Message content is in json format */
-    const JSON = 'json';
+    public const JSON = 'json';
 }

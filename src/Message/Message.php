@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 /*
  * Copyright (c) Romain Cottard
  *
@@ -9,13 +7,10 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
+declare(strict_types=1);
+
 namespace PhpMqdb\Message;
 
-/**
- * Class Message
- *
- * @author  Romain Cottard
- */
 class Message implements MessageInterface
 {
     use MessageTrait;

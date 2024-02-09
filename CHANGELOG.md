@@ -4,9 +4,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [4.0.0] - 2024-02
+[4.0.0]: https://github.com/php-mqdb/php-mqdb/compare/3.0.1...4.0.0
+### Added
+- PHP-CS-Fixer dev dependencies
+- Add ramsey/uuid dependency
+### Changed
+- Now use Uuid v7 for message id rather than pseudo random uuid.
+- Fix DBALMessageRepository to handle changes with DBAL v3 (deprecation) / v4
+- Minor code update
+- Remove DBAL from mandatory dependencies. Now in dev dependencies
+- Update SQL schema to improve types & indices (fast for lots of messages, but no more date feature)
+- Update some examples
+### Deleted
+- PHPCS dev dependencies
+- Remove PHP 7.4 support
 
-## [3.0.0] - 2022-10-03
-[2.5.0]: https://github.com/php-mqdb/php-mqdb/compare/2.5.0...3.0.0
+----
+
+## [3.0.1] - 2022-10-14
+[3.0.1]: https://github.com/php-mqdb/php-mqdb/compare/3.0.0...3.0.1
+### Changed
+- Update retry condition during ExecuteQuery in DBALMessageRepository
+
+## [3.0.0] - 2022-10-10
+[3.0.0]: https://github.com/php-mqdb/php-mqdb/compare/2.5.0...3.0.0
 ### Added
 - CI (phpstan, unit test, github workflow...)
 - Makefile to run some CI command directly

@@ -1,13 +1,13 @@
 <?php
 
-declare(strict_types=1);
-
 /*
  * Copyright (c) Romain Cottard
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
+
+declare(strict_types=1);
 
 namespace PhpMqdb\Query;
 
@@ -19,17 +19,9 @@ use PhpMqdb\Filter;
 use PhpMqdb\Message;
 use PhpMqdb\Repository\MessageRepositoryInterface;
 
-/**
- * Class QueryBuilder
- *
- * @author Romain Cottard
- */
 class QueryBuilder
 {
-    /** @var TableConfig $tableConfig */
     private TableConfig $tableConfig;
-
-    /** @var string $query */
     protected string $query = '';
 
     /** @var array<string, int|string|null> $bind */
@@ -38,19 +30,11 @@ class QueryBuilder
     /** @var string[] $where */
     private array $where = [];
 
-    /**
-     * QueryBuilder constructor.
-     *
-     * @param TableConfig $tableConfig
-     */
     public function __construct(TableConfig $tableConfig)
     {
         $this->tableConfig = $tableConfig;
     }
 
-    /**
-     * @return string
-     */
     public function getQuery(): string
     {
         return $this->query;
@@ -108,14 +92,14 @@ class QueryBuilder
         if (empty($pendingId)) {
             $fields = $this->tableConfig->getField('id');
         } else {
-            $fields = implode(', ', array_values($this->tableConfig->getFields()));
+            $fields = \implode(', ', \array_values($this->tableConfig->getFields()));
         }
 
         $order = $this->tableConfig->getOrders();
         $table = $this->tableConfig->getTable();
 
         $this->query =
-            'SELECT ' . $fields  .
+            'SELECT ' . $fields .
             '  FROM `' . $table . '` ' .
             $this->buildWhere($filter, $pendingId) .
             $this->buildOrder($order, $filter) .
@@ -154,7 +138,7 @@ class QueryBuilder
         $this->query =
             'DELETE FROM ' . $this->tableConfig->getTable() .
             ' WHERE ' . $this->tableConfig->getField('status') . ' IN ( ' .
-            implode(', ', array_keys($status)) . ') AND ' .
+            \implode(', ', \array_keys($status)) . ') AND ' .
             $this->tableConfig->getField('date_update') . ' <= :date_update AND ' .
             $this->tableConfig->getField('date_update') . ' IS NOT NULL';
 
@@ -222,6 +206,9 @@ class QueryBuilder
         return $this;
     }
 
+    /**
+     * @throws PhpMqdbConfigurationException
+     */
     public function buildQueryCountExisting(Filter $filter): self
     {
         $this->query =
@@ -246,6 +233,7 @@ class QueryBuilder
      * @param Filter $filter
      * @param string|null $pendingId
      * @return self
+     * @throws \Exception
      * @throws PhpMqdbConfigurationException
      */
     public function buildQueryProtect(Filter $filter, string $pendingId = null): self
@@ -264,9 +252,9 @@ class QueryBuilder
         ;
 
         $this->bind[':new_status']     = Enumerator\Status::ACK_PENDING;
-        $this->bind[':new_date_update'] = (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->format(
-            'Y-m-d H:i:s'
-        );
+        $this->bind[':new_date_update'] = (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))
+            ->format('Y-m-d H:i:s')
+        ;
         $this->bind[':new_pending_id'] = $pendingId;
 
         return $this;
@@ -291,10 +279,10 @@ class QueryBuilder
              WHERE ' . $this->tableConfig->getField('id') . ' = :id'
         ;
 
-        $this->bind[':new_status']      = (int) $status;
-        $this->bind[':new_date_update'] = (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->format(
-            'Y-m-d H:i:s'
-        );
+        $this->bind[':new_status']      = $status;
+        $this->bind[':new_date_update'] = (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))
+            ->format('Y-m-d H:i:s')
+        ;
         $this->bind[':new_pending_id']  = null;
         $this->bind[':id']              = $id;
 
@@ -309,13 +297,13 @@ class QueryBuilder
      * @return QueryBuilder
      * @throws PhpMqdbConfigurationException
      */
-    private function addWhere(string $field, $value, string $sign = '=', bool $orNull = false): self
+    private function addWhere(string $field, string|int|null $value, string $sign = '=', bool $orNull = false): self
     {
         $field = $this->tableConfig->getField($field);
         if ($value === null) {
-            $this->where[] = "`${field}` IS NULL";
+            $this->where[] = "`$field` IS NULL";
         } else {
-            $this->where[]            = ($orNull ? '(' : '') . "`${field}` $sign :${field}" . ($orNull ? " OR `${field}` IS NULL)" : '');
+            $this->where[] = ($orNull ? '(' : '') . "`$field` $sign :$field" . ($orNull ? " OR `$field` IS NULL)" : '');
             $this->bind[':' . $field] = $value;
         }
 
@@ -348,7 +336,7 @@ class QueryBuilder
             $where[]           = $name;
         }
 
-        $this->where[] = "`${field}` IN (" . implode(', ', $where) . ")";
+        $this->where[] = "`$field` IN (" . \implode(', ', $where) . ")";
 
         return $this;
     }
@@ -390,7 +378,7 @@ class QueryBuilder
 
         $set = [];
         foreach ($methods as $name => $value) {
-            if (in_array($name, $excludeFields)) {
+            if (\in_array($name, $excludeFields, true)) {
                 continue;
             }
 
@@ -399,11 +387,11 @@ class QueryBuilder
             }
 
             $field                    = $this->tableConfig->getField($name);
-            $set[]                    = "${field} = :${field}";
+            $set[]                    = "$field = :$field";
             $this->bind[':' . $field] = $value;
         }
 
-        if (!in_array('pending_id', $excludeFields)) { // Reset pending_id if not excluded
+        if (!\in_array('pending_id', $excludeFields, true)) { // Reset pending_id if not excluded
             $set[] = $this->tableConfig->getField('pending_id') . ' = NULL';
         }
 
@@ -411,7 +399,7 @@ class QueryBuilder
             throw new EmptySetValuesException('Cannot build SET query part! (no value to set)');
         }
 
-        return 'SET ' . implode(', ', $set);
+        return 'SET ' . \implode(', ', $set);
     }
 
     /**
@@ -428,14 +416,14 @@ class QueryBuilder
         if (!empty($pendingId)) {
             $this->addWhere('pending_id', $pendingId);
 
-            return ' WHERE ' . implode(' AND ', $this->where);
+            return ' WHERE ' . \implode(' AND ', $this->where);
         }
 
         $this->addWhere('pending_id', null);
 
         if (!empty($filter->getTopic())) {
-            $topic = strtr($filter->getTopic(), '*', '%');
-            $sign  = (strpos($topic, '%') !== false ? 'LIKE' : '=');
+            $topic = \strtr($filter->getTopic(), '*', '%');
+            $sign  = \str_contains($topic, '%') ? 'LIKE' : '=';
             $this->addWhere('topic', $topic, $sign);
         }
 
@@ -443,7 +431,7 @@ class QueryBuilder
         $this->addWhereIn('priority', $filter->getPriorities());
 
         if ($this->tableConfig->hasField('date_availability')) {
-            //~ If have no date time availability set as filter, use current datetime.
+            //~ If there is no date time availability set as filter, use current datetime.
             if (!empty($filter->getDateTimeAvailability())) {
                 $this->addWhere('date_availability', $filter->getDateTimeAvailability(), '<=', true);
             } else {
@@ -452,7 +440,7 @@ class QueryBuilder
         }
 
         if ($this->tableConfig->hasField('date_expiration')) {
-            //~ If have no date time expiration set as filter, use current datetime.
+            //~ If there is no date time expiration set as filter, use current datetime.
             if (!empty($filter->getDateTimeExpiration())) {
                 $this->addWhere('date_expiration', $filter->getDateTimeExpiration(), '>', true);
             } else {
@@ -464,7 +452,7 @@ class QueryBuilder
             $this->addWhere('entity_id', $filter->getEntityId());
         }
 
-        return ' WHERE ' . implode(' AND ', $this->where);
+        return ' WHERE ' . \implode(' AND ', $this->where);
     }
 
     /**
@@ -492,12 +480,12 @@ class QueryBuilder
 
         foreach ($order as $field => $direction) {
             //~ Skip ordering by priority when have a unique priority
-            if ($field === 'priority' && $filter !== null && count($filter->getPriorities()) === 1) {
+            if ($field === 'priority' && $filter !== null && \count($filter->getPriorities()) === 1) {
                 continue;
             }
 
-            //~ Skip ordering by priority when have an unique priority
-            if ($field === 'status' && $filter !== null && count($filter->getStatuses()) === 1) {
+            //~ Skip ordering by priority when have a unique priority
+            if ($field === 'status' && $filter !== null && \count($filter->getStatuses()) === 1) {
                 continue;
             }
 
@@ -509,6 +497,6 @@ class QueryBuilder
             return '';
         }
 
-        return ' ORDER BY ' . implode(', ', $orderBy) . ' ';
+        return ' ORDER BY ' . \implode(', ', $orderBy) . ' ';
     }
 }

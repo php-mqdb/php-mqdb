@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 /*
  * Copyright Romain Cottard
  *
@@ -9,13 +7,8 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
+declare(strict_types=1);
+
 namespace PhpMqdb\Exception;
 
-/**
- * Exception NoMessageException
- *
- * @author Romain Cottard
- */
-class NoMessageException extends PhpMqdbException
-{
-}
+class NoMessageException extends PhpMqdbException {}

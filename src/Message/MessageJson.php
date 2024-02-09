@@ -11,11 +11,6 @@ declare(strict_types=1);
 
 namespace PhpMqdb\Message;
 
-/**
- * Class Message
- *
- * @author  Romain Cottard
- */
 class MessageJson extends Message
 {
     /**
@@ -26,7 +21,7 @@ class MessageJson extends Message
      * @param bool $forceJsonEncode
      * @throws \Exception
      */
-    public function __construct(string $topic = null, $content = null, bool $forceJsonEncode = true)
+    public function __construct(string $topic = null, mixed $content = null, bool $forceJsonEncode = true)
     {
         $dateNow = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
         $this->setDateCreate($dateNow->format('Y-m-d H:i:s'));
@@ -41,10 +36,10 @@ class MessageJson extends Message
 
         if ($content !== null) {
             if ($forceJsonEncode) {
-                $content = json_encode($content);
+                $content = \json_encode($content, flags: JSON_THROW_ON_ERROR);
             }
 
-            if (is_object($content) || is_array($content)) {
+            if (\is_object($content) || \is_array($content)) {
                 throw new \RuntimeException('Cannot set content, it is not a scalar value!');
             }
             /** @var string|int|float|null|bool $content */

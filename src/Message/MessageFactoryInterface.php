@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 /*
  * Copyright (c) Romain Cottard
  *
@@ -9,13 +7,10 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
+declare(strict_types=1);
+
 namespace PhpMqdb\Message;
 
-/**
- * Class MessageFactory
- *
- * @author Romain Cottard
- */
 interface MessageFactoryInterface
 {
     /**
@@ -23,5 +18,5 @@ interface MessageFactoryInterface
      * @return MessageInterface
      * @throws \Exception
      */
-    public function create(\stdClass $data = null): MessageInterface;
+    public function create(\stdClass|null $data = null): MessageInterface;
 }

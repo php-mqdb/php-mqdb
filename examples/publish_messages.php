@@ -21,6 +21,12 @@ use PhpMqdb\Query\QueryBuilderFactory;
 require_once __DIR__ . '/../vendor/autoload.php';
 $repository = require_once __DIR__ . '/_init_pdo_repository.php';
 
+error_reporting(E_ALL);
+
+$time = -microtime(true);
+
+const NUMBER_OF_MESSAGES = 1_000_000;
+
 //~ Table Config
 $tableConfig = new TableConfig();
 
@@ -38,7 +44,7 @@ $client = new Client($repository);
 $date = new \DateTimeImmutable();
 
 //~ Publish messages
-for ($index = 1; $index <= 1000; $index++) {
+for ($index = 1; $index <= NUMBER_OF_MESSAGES; $index++) {
     echo 'process ' . $index . "\r";
 
     $interval = new \DateInterval('PT' . rand(0, 10) . 'M' . rand(0, 59) . 'S');
@@ -51,7 +57,7 @@ for ($index = 1; $index <= 1000; $index++) {
     $message->setPriority(rand(Enumerator\Priority::VERY_HIGH, Enumerator\Priority::VERY_LOW));
     $message->setTopic('publish.content');
     $message->setStatus(Enumerator\Status::IN_QUEUE);
-    $message->setContent(json_encode($content));
+    $message->setContent(\json_encode($content, flags: \JSON_THROW_ON_ERROR));
     $message->setContentType('json');
     $message->setEntityId($content->id);
     $message->setDateAvailability($date->add($interval)->format('Y-m-d H:i:s'));
@@ -59,5 +65,10 @@ for ($index = 1; $index <= 1000; $index++) {
 
     $client->publish($message);
 }
+
+echo PHP_EOL;
+
+$time += microtime(true);
+echo "Time taken: " . round($time, 5) . PHP_EOL;
 
 echo PHP_EOL;

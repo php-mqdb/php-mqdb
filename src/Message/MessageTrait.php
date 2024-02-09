@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 /*
  * Copyright (c) Romain Cottard
  *
@@ -9,15 +7,12 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
+declare(strict_types=1);
+
 namespace PhpMqdb\Message;
 
 use PhpMqdb\Enumerator;
 
-/**
- * Trait Message. Implementation of MessageInterface
- *
- * @author  Romain Cottard
- */
 trait MessageTrait
 {
     protected string $id = '';
@@ -101,9 +96,9 @@ trait MessageTrait
      * Set Message Identifier.
      *
      * @param  string $id
-     * @return MessageInterface
+     * @return static
      */
-    public function setId(string $id): MessageInterface
+    public function setId(string $id): static
     {
         $this->id = $id;
 
@@ -119,10 +114,10 @@ trait MessageTrait
      *  3: ack received (treated, cannot be retreated)
      *
      * @param  int $status
-     * @return MessageInterface
+     * @return static
      * @throws \UnderflowException
      */
-    public function setStatus(int $status): MessageInterface
+    public function setStatus(int $status): static
     {
         if ($status < 0) {
             throw new \UnderflowException('Value of "status" must be greater than 0');
@@ -143,10 +138,10 @@ trait MessageTrait
      *  5: Very Low
      *
      * @param  int $priority
-     * @return MessageInterface
+     * @return static
      * @throws \UnderflowException
      */
-    public function setPriority(int $priority): MessageInterface
+    public function setPriority(int $priority): static
     {
         if ($priority < 0) {
             throw new \UnderflowException('Value of "priority" must be greater than 0');
@@ -161,9 +156,9 @@ trait MessageTrait
      * Set message topic.
      *
      * @param  string $topic
-     * @return MessageInterface
+     * @return static
      */
-    public function setTopic(string $topic): MessageInterface
+    public function setTopic(string $topic): static
     {
         $this->topic = $topic;
 
@@ -174,9 +169,9 @@ trait MessageTrait
      * Set message content.
      *
      * @param  string $content
-     * @return MessageInterface
+     * @return static
      */
-    public function setContent(string $content): MessageInterface
+    public function setContent(string $content): static
     {
         $this->content = $content;
 
@@ -187,9 +182,9 @@ trait MessageTrait
      * Set message content type
      *
      * @param  string $contentType ('csv', 'json', 'xml', 'text'...)
-     * @return MessageInterface
+     * @return static
      */
-    public function setContentType(string $contentType): MessageInterface
+    public function setContentType(string $contentType): static
     {
         $this->contentType = $contentType;
 
@@ -200,9 +195,9 @@ trait MessageTrait
      * Set Entity identifier linked to the message.
      *
      * @param  string|null $entityId
-     * @return MessageInterface
+     * @return static
      */
-    public function setEntityId(?string $entityId): MessageInterface
+    public function setEntityId(?string $entityId): static
     {
         $this->entityId = $entityId;
 
@@ -213,9 +208,9 @@ trait MessageTrait
      * Set the expiration date of the message.
      *
      * @param  string|null $dateExpiration
-     * @return MessageInterface
+     * @return static
      */
-    public function setDateExpiration(?string $dateExpiration): MessageInterface
+    public function setDateExpiration(?string $dateExpiration): static
     {
         $this->dateExpiration = $dateExpiration;
 
@@ -226,9 +221,9 @@ trait MessageTrait
      * Set availability date of the message.
      *
      * @param  string|null $dateAvailability
-     * @return MessageInterface
+     * @return static
      */
-    public function setDateAvailability(?string $dateAvailability): MessageInterface
+    public function setDateAvailability(?string $dateAvailability): static
     {
         $this->dateAvailability = $dateAvailability;
 
@@ -239,9 +234,9 @@ trait MessageTrait
      * Set the creation date of the message.
      *
      * @param  string $dateCreate
-     * @return MessageInterface
+     * @return static
      */
-    public function setDateCreate(string $dateCreate): MessageInterface
+    public function setDateCreate(string $dateCreate): static
     {
         $this->dateCreate = $dateCreate;
 
@@ -252,9 +247,9 @@ trait MessageTrait
      * Set the update date of the message.
      *
      * @param  string|null $dateUpdate
-     * @return MessageInterface
+     * @return static
      */
-    public function setDateUpdate(?string $dateUpdate): MessageInterface
+    public function setDateUpdate(?string $dateUpdate): static
     {
         $this->dateUpdate = $dateUpdate;
 

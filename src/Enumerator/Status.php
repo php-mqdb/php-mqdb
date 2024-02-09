@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 /*
  * Copyright Romain Cottard
  *
@@ -9,10 +7,11 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
+declare(strict_types=1);
+
 namespace PhpMqdb\Enumerator;
 
 /**
- * Class Status.
  * List of possible status for a message.
  *  0: In queue (Waiting to be consumed)
  *  1: pending ack (waiting for response)
@@ -25,17 +24,17 @@ namespace PhpMqdb\Enumerator;
 class Status
 {
     /** @var int IN_QUEUE Message is in queue and can be consumed */
-    const IN_QUEUE = 0;
+    public const IN_QUEUE = 0;
 
     /** @var int ACK_PENDING Message has been consumed, but acknowledgement is pending */
-    const ACK_PENDING = 1;
+    public const ACK_PENDING = 1;
 
     /** @var int ACK_RECEIVED Message has been consumed and acknowledgement received */
-    const ACK_RECEIVED = 2;
+    public const ACK_RECEIVED = 2;
 
     /** @var int NACK_RECEIVED Message has been consumed and non acknowledgement received */
-    const NACK_RECEIVED = 3;
+    public const NACK_RECEIVED = 3;
 
     /** @var int ACK_NOT_RECEIVED Message has been consumed, but acknowledgement is pending since a long time */
-    const ACK_NOT_RECEIVED = 4;
+    public const ACK_NOT_RECEIVED = 4;
 }

@@ -9,11 +9,11 @@
 
 declare(strict_types=1);
 
-namespace PhpMqdb\Tests;
+namespace PhpMqdb\Tests\Unit;
 
-use PhpMqdb\Filter;
 use PhpMqdb\Enumerator\Priority;
 use PhpMqdb\Enumerator\Status;
+use PhpMqdb\Filter;
 use PHPUnit\Framework\TestCase;
 
 class FilterTest extends TestCase
@@ -220,7 +220,7 @@ class FilterTest extends TestCase
      *
      * @return string[][]
      */
-    public function validTopicsDataProvider(): array
+    public static function validTopicsDataProvider(): array
     {
         return [
             ['topic'],
@@ -240,7 +240,7 @@ class FilterTest extends TestCase
      *
      * @return string[][]
      */
-    public function invalidTopicsDataProvider(): array
+    public static function invalidTopicsDataProvider(): array
     {
         return [
             ['topic.subtopic.'],

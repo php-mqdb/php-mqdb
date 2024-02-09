@@ -13,11 +13,6 @@ namespace PhpMqdb\Config;
 
 use PhpMqdb\Exception\PhpMqdbConfigurationException;
 
-/**
- * Class TableDefault
- *
- * @author Romain Cottard
- */
 final class TableConfig
 {
     private string $table = 'message_queue';
@@ -57,7 +52,7 @@ final class TableConfig
             throw new PhpMqdbConfigurationException('Empty table name');
         }
 
-        if ((bool) preg_match('`[^a-zA-Z0-9_-]`', $table)) {
+        if ((bool) \preg_match('`[^a-zA-Z0-9_-]`', $table) === true) {
             throw new PhpMqdbConfigurationException('Invalid table name!');
         }
 
@@ -76,7 +71,7 @@ final class TableConfig
         $this->fields = [];
 
         foreach ($fields as $key => $field) {
-            if ((bool) preg_match('`[^a-zA-Z0-9_-]`', $field)) {
+            if ((bool) \preg_match('`[^a-zA-Z0-9_-]`', $field) === true) {
                 throw new PhpMqdbConfigurationException('Invalid field name!');
             }
 
@@ -100,7 +95,7 @@ final class TableConfig
                 continue;
             }
 
-            if (!in_array($order, ['ASC', 'DESC'])) {
+            if (!\in_array($order, ['ASC', 'DESC'], true)) {
                 throw new PhpMqdbConfigurationException('Invalid order direction!');
             }
 

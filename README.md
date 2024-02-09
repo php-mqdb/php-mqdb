@@ -17,8 +17,11 @@ $ composer require php-mqdb/php-mqdb
 
 ### Database
 You must have a database with given table to store messages (the messages queue).
-An sample create table is provide in sql/ directory.
+A sample create table is provide in sql/ directory.
 
+#### PDO & Doctrine/DBAL
+PDO & DBAL repository are provided in this library. But only PDO is required by default.
+You can use Doctrine/DBAL library (v3 or v4), but you need to require it in your composer.json file. 
 
 ## Getting messages - How to work
 ### Default ordering
@@ -28,7 +31,7 @@ Functions getMessage() & getMessages get messages in following order:
  - date create ascendant
 
 So, the messages with high priority, and with prior date availability (and with prior creation date)
-will be get in priority.
+will get in priority.
 
 ### Filtering
 You may filter messages you want to get. Possible filters are:
@@ -82,7 +85,7 @@ $client->nack($message->getId(), false);
 ```
 
 
-### Get multiple messages
+### Get multiples messages
 
 ```php
 <?php

@@ -11,7 +11,6 @@ declare(strict_types=1);
 
 namespace PhpMqdb\Examples;
 
-use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\DriverManager;
 use PhpMqdb\Repository\DBALMessageRepository;
 

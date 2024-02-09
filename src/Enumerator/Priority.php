@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 /*
  * Copyright Romain Cottard
  *
@@ -9,33 +7,32 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
+declare(strict_types=1);
+
 namespace PhpMqdb\Enumerator;
 
 /**
- * Class Priority.
  * List of possible priority value for a message.
  *  1: Very High
  *  2: High
  *  3: Medium
  *  4: Low
  *  5: Very Low
- *
- * @author Romain Cottard
  */
 class Priority
 {
     /** @var int VERY_HIGH */
-    const VERY_HIGH = 1;
+    public const VERY_HIGH = 1;
 
     /** @var int HIGH */
-    const HIGH = 2;
+    public const HIGH = 2;
 
     /** @var int MEDIUM */
-    const MEDIUM = 3;
+    public const MEDIUM = 3;
 
     /** @var int LOW */
-    const LOW = 4;
+    public const LOW = 4;
 
     /** @var int VERY_LOW */
-    const VERY_LOW = 5;
+    public const VERY_LOW = 5;
 }
