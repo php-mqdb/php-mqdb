@@ -1,7 +1,7 @@
 # php-mqdb
 
 [![Current version](https://img.shields.io/packagist/v/php-mqdb/php-mqdb.svg?logo=composer)](https://packagist.org/packages/php-mqdb/php-mqdb)
-[![Supported PHP version](https://img.shields.io/static/v1?logo=php&label=PHP&message=7.4.*|8.1.*&color=777bb4)](https://packagist.org/packages/php-mqdb/php-mqdb)
+[![Supported PHP version](https://img.shields.io/static/v1?logo=php&label=PHP&message=8.1-8.3&color=777bb4)](https://packagist.org/packages/php-mqdb/php-mqdb)
 ![CI](https://github.com/php-mqdb/php-mqdb/workflows/CI/badge.svg)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=php-mqdb_php-mqdb&metric=alert_status)](https://sonarcloud.io/dashboard?id=php-mqdb_php-mqdb)
 [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=php-mqdb_php-mqdb&metric=coverage)](https://sonarcloud.io/dashboard?id=php-mqdb_php-mqdb)
