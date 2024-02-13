@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 /*
  * Copyright (c) Romain Cottard
  *
@@ -9,26 +7,17 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
+declare(strict_types=1);
+
 namespace PhpMqdb\Message;
 
 use PhpMqdb\Config\TableConfig;
 use PhpMqdb\Enumerator;
 
-/**
- * Class MessageFactory
- *
- * @author Romain Cottard
- */
 class MessageFactory implements MessageFactoryInterface
 {
-    /** @var TableConfig $tableConfig */
-    private $tableConfig;
+    private TableConfig $tableConfig;
 
-    /**
-     * MessageFactory constructor.
-     *
-     * @param TableConfig $tableConfig
-     */
     public function __construct(TableConfig $tableConfig)
     {
         $this->tableConfig = $tableConfig;
@@ -39,7 +28,7 @@ class MessageFactory implements MessageFactoryInterface
      * @return MessageInterface
      * @throws \Exception
      */
-    public function create(\stdClass $data = null): MessageInterface
+    public function create(\stdClass|null $data = null): MessageInterface
     {
         $contentType      = Enumerator\ContentType::TEXT;
         $contentTypeField = $this->tableConfig->getField('content_type');
@@ -48,14 +37,10 @@ class MessageFactory implements MessageFactoryInterface
             $contentType = $data->{$contentTypeField};
         }
 
-        switch ($contentType) {
-            case Enumerator\ContentType::JSON:
-                $message = new MessageJson();
-                break;
-            case Enumerator\ContentType::TEXT:
-            default:
-                $message = new Message();
-        }
+        $message = match ($contentType) {
+            Enumerator\ContentType::JSON => new MessageJson(),
+            default => new Message(),
+        };
 
         if (!empty($data)) {
             $this->hydrateMessage($message, $data);
@@ -84,15 +69,15 @@ class MessageFactory implements MessageFactoryInterface
             ->setDateUpdate($data->{$fields['date_update']} ?? null)
         ;
 
-        if (array_key_exists('entity_id', $fields)) {
+        if (\array_key_exists('entity_id', $fields)) {
             $message->setEntityId($data->{$fields['entity_id']});
         }
 
-        if (array_key_exists('date_expiration', $fields)) {
+        if (\array_key_exists('date_expiration', $fields)) {
             $message->setDateExpiration($data->{$fields['date_expiration']});
         }
 
-        if (array_key_exists('date_availability', $fields)) {
+        if (\array_key_exists('date_availability', $fields)) {
             $message->setDateAvailability($data->{$fields['date_availability']});
         }
 

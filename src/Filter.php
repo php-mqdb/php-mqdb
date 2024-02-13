@@ -11,14 +11,6 @@ declare(strict_types=1);
 
 namespace PhpMqdb;
 
-use PhpMqdb\Enumerator;
-
-/**
- * Class Filter.
- * Define filter to get corresponding message.
- *
- * @author Romain Cottard
- */
 class Filter
 {
     private const DATE_FORMAT_SQL = 'Y-m-d H:i:s';
@@ -47,7 +39,7 @@ class Filter
     public function __construct(int $maxLimit = 1000)
     {
         //~ Set current UTC date time (based on current timestamp)
-        $this->setDateTimeCurrent((string) date(self::DATE_FORMAT_SQL, time()));
+        $this->setDateTimeCurrent(date(self::DATE_FORMAT_SQL, \time()));
 
         $this->setMaxLimit($maxLimit);
     }
@@ -215,7 +207,7 @@ class Filter
             throw new \RuntimeException('Topic filter given cannot be empty!');
         }
 
-        if (!(bool) preg_match('`^([a-z0-9_]+\.)*([a-z0-9_]+|\*)$`', $topic)) {
+        if ((bool) \preg_match('`^([a-z0-9_]+\.)*([a-z0-9_]+|\*)$`', $topic) === false) {
             throw new \RuntimeException('Topic filter must contain only alphanums, ".", "_" & "*" characters!');
         }
 

@@ -17,11 +17,15 @@ use PhpMqdb\Filter;
 use PhpMqdb\Message\MessageFactory;
 use PhpMqdb\Query\QueryBuilderFactory;
 
-$time = -microtime(true);
-$messageList = [];
+error_reporting(E_ALL);
 
-for ($childIndex = 0; $childIndex < 20; $childIndex++) {
-    $pid = pcntl_fork();
+const NUMBER_OF_WORKER = 50;
+const NUMBER_OF_MESSAGES = 1000;
+
+$time = -microtime(true);
+
+for ($childIndex = 0; $childIndex < NUMBER_OF_WORKER; $childIndex++) {
+    $pid = \pcntl_fork();
 
     if ($pid === -1 || $pid === 0) {
         goto child;
@@ -37,11 +41,11 @@ if ($pid > 0) {
 
     while (pcntl_waitpid(0, $status) !== -1) {
         $status = pcntl_wexitstatus($status);
-        echo "Child $status completed\n";
+        echo "Child of $pid completed (status: $status)\n";
     }
 
-    asort($messageList);
-    var_export($messageList);
+    $time += microtime(true);
+    echo "Total Time taken: " . round($time, 5) . "s" . PHP_EOL;
     exit(0);
 }
 
@@ -69,9 +73,7 @@ $tableConfig->setFields(
     ]
 );
 
-$tableConfig->setOrders([
-    'priority' => 'ASC',
-]);
+$tableConfig->setOrders(['priority' => 'ASC']);
 
 //~ Factories
 $messageFactory      = new MessageFactory($tableConfig);
@@ -87,7 +89,7 @@ $client = new Client($repository);
 //~ Filter
 $filter = (new Filter())
     ->setPriorities([3])
-    ->setLimit(20)
+    ->setLimit(NUMBER_OF_MESSAGES)
 ;
 
 //~ Get messages
@@ -101,7 +103,7 @@ foreach ($messages as $message) {
     $client->ack($message->getId());
     $content = json_decode($message->getContent());
 
-    echo $content->title . PHP_EOL;
+    echo $content->title . " from child #$childIndex" . PHP_EOL;
 }
 
 $time += microtime(true);

@@ -22,12 +22,8 @@ use PhpMqdb\Message;
 use PhpMqdb\Message\MessageInterface;
 use PhpMqdb\Query\QueryBuilder;
 use PhpMqdb\Query\QueryBuilderFactory;
+use Ramsey\Uuid\Uuid;
 
-/**
- * Interface for Message Repository
- *
- * @author Romain Cottard
- */
 abstract class AbstractDatabaseMessageRepository implements MessageRepositoryInterface
 {
     private Message\MessageFactoryInterface $messageFactory;
@@ -110,7 +106,6 @@ abstract class AbstractDatabaseMessageRepository implements MessageRepositoryInt
      * @param Filter $filter
      * @return Message\MessageInterface|null
      * @throws PhpMqdbConfigurationException
-     * @throws Exception
      */
     public function getMessage(Filter $filter): ?Message\MessageInterface
     {
@@ -123,7 +118,7 @@ abstract class AbstractDatabaseMessageRepository implements MessageRepositoryInt
             return null;
         }
 
-        return array_pop($messages);
+        return \array_pop($messages);
     }
 
     /**
@@ -133,7 +128,6 @@ abstract class AbstractDatabaseMessageRepository implements MessageRepositoryInt
      * @return Message\MessageInterface[]
      * @throws PhpMqdbConfigurationException
      * @throws \Exception
-     * @throws Exception
      */
     public function getMessages(Filter $filter): array
     {
@@ -141,11 +135,11 @@ abstract class AbstractDatabaseMessageRepository implements MessageRepositoryInt
 
         $queryBuilder = $this->getQueryBuilder();
 
-        $stmt    = $this->executeQuery($queryBuilder->buildQueryGet($filter, $this->protectMessages($filter)));
-        $results = $stmt instanceof Result ? $stmt->fetchAllAssociative() : $stmt->fetchAll(\PDO::FETCH_ASSOC);
-
-        if ($results === false) {
-            throw new PhpMqdbException('Unable to fetch message!');
+        try {
+            $stmt    = $this->executeQuery($queryBuilder->buildQueryGet($filter, $this->protectMessages($filter)));
+            $results = $stmt instanceof Result ? $stmt->fetchAllAssociative() : $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        } catch (\Throwable $exception) {
+            throw new PhpMqdbException('Unable to fetch message!', (int) $exception->getCode(), $exception);
         }
 
         foreach ($results as $row) {
@@ -161,8 +155,8 @@ abstract class AbstractDatabaseMessageRepository implements MessageRepositoryInt
     /**
      * @param Filter $filter
      * @return int
+     * @throws \Doctrine\DBAL\Exception
      * @throws PhpMqdbConfigurationException
-     * @throws Exception
      */
     public function countMessages(Filter $filter): int
     {
@@ -241,7 +235,7 @@ abstract class AbstractDatabaseMessageRepository implements MessageRepositoryInt
      * @return MessageRepositoryInterface
      * @throws EmptySetValuesException
      * @throws PhpMqdbConfigurationException
-     * @throws \Exception|Exception
+     * @throws \Exception
      */
     public function publishOrSkipEntityMessage(Message\MessageInterface $message): MessageRepositoryInterface
     {
@@ -320,7 +314,7 @@ abstract class AbstractDatabaseMessageRepository implements MessageRepositoryInt
             ->setDateCreate($existingMessage->getDateCreate())
             ->setDateAvailability($existingMessage->getDateAvailability()) // Keep previous availability
             ->setPriority(
-                min($message->getPriority(), $existingMessage->getPriority())
+                \min($message->getPriority(), $existingMessage->getPriority())
             ) // We keep the highest priority (ie the lowest value)
             ->setDateUpdate($this->getRelativeDate())
         ;
@@ -338,7 +332,7 @@ abstract class AbstractDatabaseMessageRepository implements MessageRepositoryInt
      */
     private function protectMessages(Filter $filter): string
     {
-        $pendingId = $this->generateId(1);
+        $pendingId = $this->generateShortId();
 
         $this->executeQuery($this->getQueryBuilder()->buildQueryProtect($filter, $pendingId));
 
@@ -346,20 +340,26 @@ abstract class AbstractDatabaseMessageRepository implements MessageRepositoryInt
     }
 
     /**
-     * Generate unique id. Format is: [0-f]{16}-[0-f]{16}-...
+     * Generate unique id.
+     * Use uuid 7 for better performances with mysql db primary keys, due to ordered prefix uuid based on time
      *
-     * @param int $nbChunk Number of "chunk" of 8 hexadecimal chars in generated id.
      * @return string
      * @throws \Exception
      */
-    private function generateId(int $nbChunk = 4): string
+    private function generateId(): string
     {
-        $chunks = [];
-        for ($i = 0; $i < $nbChunk; $i++) {
-            $chunks[] = sprintf('%08x', random_int(0, 0xffffffff));
-        }
+        return Uuid::uuid7()->toString();
+    }
 
-        return implode('-', $chunks);
+    /**
+     * Generate unique short id.
+     *
+     * @return string
+     * @throws \Exception
+     */
+    private function generateShortId(): string
+    {
+        return sprintf('%08x', random_int(0, 0xffffffff));
     }
 
     /**

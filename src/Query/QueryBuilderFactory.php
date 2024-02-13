@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 /*
  * Copyright (c) Romain Cottard
  *
@@ -9,25 +7,16 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
+declare(strict_types=1);
+
 namespace PhpMqdb\Query;
 
 use PhpMqdb\Config\TableConfig;
 
-/**
- * Class QueryBuilderFactory
- *
- * @author Romain Cottard
- */
 class QueryBuilderFactory
 {
-    /** @var TableConfig $tableConfig */
-    private $tableConfig;
+    private TableConfig $tableConfig;
 
-    /**
-     * QueryBuilderFactory constructor.
-     *
-     * @param TableConfig $tableConfig
-     */
     public function __construct(TableConfig $tableConfig)
     {
         $this->tableConfig = $tableConfig;

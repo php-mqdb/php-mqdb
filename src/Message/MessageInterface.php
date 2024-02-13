@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 /*
  * Copyright (c) Romain Cottard
  *
@@ -9,13 +7,10 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
+declare(strict_types=1);
+
 namespace PhpMqdb\Message;
 
-/**
- * Interface for the message.
- *
- * @author  Romain Cottard
- */
 interface MessageInterface
 {
     /**
@@ -101,7 +96,7 @@ interface MessageInterface
      * @param  string $id
      * @return $this
      */
-    public function setId(string $id);
+    public function setId(string $id): static;
 
     /**
      * Set message status.
@@ -115,7 +110,7 @@ interface MessageInterface
      * @return $this
      * @throws \UnderflowException
      */
-    public function setStatus(int $status);
+    public function setStatus(int $status): static;
 
     /**
      * Set message priority.
@@ -130,7 +125,7 @@ interface MessageInterface
      * @return $this
      * @throws \UnderflowException
      */
-    public function setPriority(int $priority);
+    public function setPriority(int $priority): static;
 
     /**
      * Set message topic.
@@ -138,7 +133,7 @@ interface MessageInterface
      * @param  string $topic
      * @return $this
      */
-    public function setTopic(string $topic);
+    public function setTopic(string $topic): static;
 
     /**
      * Set message content.
@@ -146,7 +141,7 @@ interface MessageInterface
      * @param  string $content
      * @return $this
      */
-    public function setContent(string $content);
+    public function setContent(string $content): static;
 
     /**
      * Set message content type
@@ -154,7 +149,7 @@ interface MessageInterface
      * @param  string $contentType ('csv', 'json', 'xml', 'text'...)
      * @return $this
      */
-    public function setContentType(string $contentType);
+    public function setContentType(string $contentType): static;
 
     /**
      * Set Entity identifier linked to the message.
@@ -162,7 +157,7 @@ interface MessageInterface
      * @param  string|null $entityId
      * @return $this
      */
-    public function setEntityId(?string $entityId);
+    public function setEntityId(?string $entityId): static;
 
     /**
      * Set the expiration date of the message.
@@ -170,7 +165,7 @@ interface MessageInterface
      * @param  string|null $dateExpiration
      * @return $this
      */
-    public function setDateExpiration(?string $dateExpiration);
+    public function setDateExpiration(?string $dateExpiration): static;
 
     /**
      * Set availability date of the message.
@@ -178,7 +173,7 @@ interface MessageInterface
      * @param  string|null $dateAvailability
      * @return $this
      */
-    public function setDateAvailability(?string $dateAvailability);
+    public function setDateAvailability(?string $dateAvailability): static;
 
     /**
      * Set the creation date of the message.
@@ -186,7 +181,7 @@ interface MessageInterface
      * @param  string $dateCreate
      * @return $this
      */
-    public function setDateCreate(string $dateCreate);
+    public function setDateCreate(string $dateCreate): static;
 
     /**
      * Set the update date of the message.
@@ -194,5 +189,5 @@ interface MessageInterface
      * @param  string|null $dateUpdate
      * @return $this
      */
-    public function setDateUpdate(?string $dateUpdate);
+    public function setDateUpdate(?string $dateUpdate): static;
 }
