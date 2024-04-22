@@ -44,7 +44,7 @@ class PDOMessageRepository extends AbstractDatabaseMessageRepository
             $stmt->execute($queryBuilder->getBind());
         } catch (\PDOException $exception) {
             if ($this->connectionFactory instanceof ConnectionFactory && $this->isConnectionLost($exception)) {
-                $this->connection = $this->connectionFactory->getConnection('string');
+                $this->connection = $this->connectionFactory->getConnection($this->connectionName);
                 $stmt = $this->connection->prepare($queryBuilder->getQuery());
                 $stmt->execute($queryBuilder->getBind());
             } else {
