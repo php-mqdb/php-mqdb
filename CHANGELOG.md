@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [4.1.0] - 2024-04-22
+[4.1.0]: https://github.com/php-mqdb/php-mqdb/compare/4.0.0...4.1.0
+### Added
+- Now can pass ConnectionFactory (from eureka/component-database) to PDORepository to handle auto-reconnection
+- Add some integration test for PDO, PDO with ConnectionFactory & DBAL repository
+### Changed
+- Some CS fix after php-cs-fixer update
+- Dependencies check is now in dependencies, not at global level
+
+
 ## [4.0.0] - 2024-02
 [4.0.0]: https://github.com/php-mqdb/php-mqdb/compare/3.0.1...4.0.0
 ### Added

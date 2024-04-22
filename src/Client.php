@@ -114,7 +114,7 @@ class Client
      */
     public function publishOrUpdateEntityMessage(
         Message\MessageInterface $message,
-        ?callable $mergeCallback = null
+        ?callable $mergeCallback = null,
     ): self {
         $this->messageRepository->publishOrUpdateEntityMessage($message, $mergeCallback);
 
@@ -175,7 +175,7 @@ class Client
      */
     public function cleanMessages(
         \DateInterval $interval,
-        int $bitmaskDelete = MessageRepositoryInterface::DELETE_SAFE
+        int $bitmaskDelete = MessageRepositoryInterface::DELETE_SAFE,
     ): self {
         $this->messageRepository->cleanMessages($interval, $bitmaskDelete);
 

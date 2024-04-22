@@ -12,7 +12,6 @@ validate:
 
 install:
 	$(call header,Composer Install)
-	@composer global require maglnet/composer-require-checker
 	@composer install
 
 update:
@@ -41,11 +40,11 @@ build/reports/phpstan:
 #~ main commands
 deps: composer.json
 	$(call header,Checking Dependencies)
-	@XDEBUG_MODE=off composer-require-checker check
+	@XDEBUG_MODE=off ./vendor/bin/composer-require-checker check --config-file=./ci/deps-config.json
 
 phpcs: vendor/bin/phpcs build/reports/phpcs
 	$(call header,Checking Code Style)
-	@./vendor/bin/php-cs-fixer check
+	@./vendor/bin/php-cs-fixer check -v --diff
 
 phpcbf: vendor/bin/phpcbf
 	$(call header,Fixing Code Style)
@@ -73,7 +72,7 @@ tests: vendor/bin/phpunit build/reports/phpunit #ci
 
 integration: vendor/bin/phpunit build/reports/phpunit #manual
 	$(call header,Running Integration Tests)
-	@XDEBUG_MODE=coverage php -dzend_extension=xdebug.so ./vendor/bin/phpunit --testsuite=integration --fail-on-warning
+	@XDEBUG_MODE=coverage php -dzend_extension=xdebug.so ./vendor/bin/phpunit --testsuite=integration --fail-on-warning --testdox
 
 testdox: vendor/bin/phpunit #manual
 	$(call header,Running Unit Tests (Pretty format))

@@ -11,18 +11,26 @@ declare(strict_types=1);
 
 namespace PhpMqdb\Repository;
 
+use Eureka\Component\Database\ConnectionFactory;
 use PhpMqdb\Query\QueryBuilder;
 
 class PDOMessageRepository extends AbstractDatabaseMessageRepository
 {
-    /**
-     * PDOMessageRepository constructor.
-     *
-     * @param \PDO $connection
-     */
+    private \PDO $connection;
+
     public function __construct(
-        private readonly \PDO $connection
-    ) {}
+        \PDO|null $connection = null,
+        private readonly ConnectionFactory|null $connectionFactory = null,
+        private readonly string $connectionName = '',
+    ) {
+        if ($this->connectionFactory instanceof ConnectionFactory) {
+            $this->connection = $this->connectionFactory->getConnection($this->connectionName);
+        } elseif ($connection instanceof \PDO) {
+            $this->connection = $connection;
+        } else {
+            throw new \UnexpectedValueException('\PDO connection or ConnectionFactory must be set');
+        }
+    }
 
     /**
      * @param QueryBuilder $queryBuilder
@@ -31,9 +39,31 @@ class PDOMessageRepository extends AbstractDatabaseMessageRepository
      */
     protected function executeQuery(QueryBuilder $queryBuilder)
     {
-        $stmt = $this->connection->prepare($queryBuilder->getQuery());
-        $stmt->execute($queryBuilder->getBind());
+        try {
+            $stmt = $this->connection->prepare($queryBuilder->getQuery());
+            $stmt->execute($queryBuilder->getBind());
+        } catch (\PDOException $exception) {
+            if ($this->connectionFactory instanceof ConnectionFactory && $this->isConnectionLost($exception)) {
+                $this->connection = $this->connectionFactory->getConnection('string');
+                $stmt = $this->connection->prepare($queryBuilder->getQuery());
+                $stmt->execute($queryBuilder->getBind());
+            } else {
+                throw $exception;
+            }
+        }
 
         return $stmt;
+    }
+
+    /**
+     * @param \PDOException $exception
+     * @return bool
+     */
+    protected function isConnectionLost(\PDOException $exception): bool
+    {
+        // Only keep SQLState HY000 with ErrorCode 2006 | 2013 (MySQL server has gone away)
+        $sqlState = $exception->errorInfo[0] ?? 'UNKNW';
+        $sqlCode  = $exception->errorInfo[1] ?? 1;
+        return $sqlState === 'HY000' && in_array($sqlCode, [2006, 2013], true);
     }
 }

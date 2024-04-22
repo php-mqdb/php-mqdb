@@ -205,7 +205,7 @@ abstract class AbstractDatabaseMessageRepository implements MessageRepositoryInt
      */
     public function publishOrUpdateEntityMessage(
         Message\MessageInterface $message,
-        ?callable $mergeCallback = null
+        ?callable $mergeCallback = null,
     ): MessageRepositoryInterface {
         if (empty($message->getEntityId())) {
             throw new \LogicException("Can't use publishOrUpdateEntityMessage if there is not Entity in the message");
@@ -264,7 +264,7 @@ abstract class AbstractDatabaseMessageRepository implements MessageRepositoryInt
      */
     public function cleanMessages(
         \DateInterval $interval,
-        int $bitmaskDelete = self::DELETE_SAFE
+        int $bitmaskDelete = self::DELETE_SAFE,
     ): MessageRepositoryInterface {
         $queryBuilder = $this->getQueryBuilder();
         $this->executeQuery($queryBuilder->buildQueryClean($bitmaskDelete, $this->getRelativeDate($interval)));
@@ -306,7 +306,7 @@ abstract class AbstractDatabaseMessageRepository implements MessageRepositoryInt
      */
     protected function mergeMessages(
         Message\MessageInterface $existingMessage,
-        Message\MessageInterface $message
+        Message\MessageInterface $message,
     ): MessageRepositoryInterface {
         // Update message using existing date when needed
         $message->setId($existingMessage->getId())
@@ -314,7 +314,7 @@ abstract class AbstractDatabaseMessageRepository implements MessageRepositoryInt
             ->setDateCreate($existingMessage->getDateCreate())
             ->setDateAvailability($existingMessage->getDateAvailability()) // Keep previous availability
             ->setPriority(
-                \min($message->getPriority(), $existingMessage->getPriority())
+                \min($message->getPriority(), $existingMessage->getPriority()),
             ) // We keep the highest priority (ie the lowest value)
             ->setDateUpdate($this->getRelativeDate())
         ;
