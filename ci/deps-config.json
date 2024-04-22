@@ -1,0 +1,11 @@
+{
+  "symbol-whitelist": [
+    "Eureka\\Component\\Database\\ConnectionFactory",
+    "Doctrine\\DBAL\\Connection",
+    "Doctrine\\DBAL\\Exception\\DeadlockException",
+    "Doctrine\\DBAL\\Exception\\DriverException",
+    "Doctrine\\DBAL\\ParameterType",
+    "Doctrine\\DBAL\\Result",
+    "Doctrine\\DBAL\\Statement"
+  ]
+}
