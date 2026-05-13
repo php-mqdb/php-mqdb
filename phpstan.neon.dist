@@ -7,7 +7,7 @@ includes:
   - ./ci/phpstan-baseline.neon
 
 parameters:
-  phpVersion: 80100
+  phpVersion: 80200
   level: max
   paths:
     - ./src

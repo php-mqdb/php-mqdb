@@ -1,6 +1,6 @@
 .PHONY: validate install update php/deps php/check php/fix php/min-compatibility php/max-compatibility php/phpstan php/analyze php/tests php/test php/testdox ci clean
 
-PHP_MIN_VERSION := "8.1"
+PHP_MIN_VERSION := "8.2"
 PHP_MAX_VERSION := "8.5"
 COMPOSER_BIN := composer
 define header =
