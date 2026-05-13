@@ -48,8 +48,8 @@
     "phpstan/phpstan-phpunit": "^2.0.16",
     "phpstan/phpstan-deprecation-rules": "^2.0.4",
     "phpstan/phpstan-strict-rules": "^2.0.11",
-    "phpunit/phpcov": "^11.0.4",
-    "phpunit/phpunit": "^12.5.25",
+    "phpunit/phpcov": "^10.0.1",
+    "phpunit/phpunit": "^11.5.55",
     "symfony/cache": "^7.4.10",
     "shipmonk/composer-dependency-analyser": "^1.8.4"
   }
