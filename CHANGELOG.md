@@ -5,11 +5,16 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [4.2.0] - 2026-05-13
-[4.2.0]: https://github.com/php-mqdb/php-mqdb/compare/4.1.1...4.2.0
+[4.2.0]: https://github.com/php-mqdb/php-mqdb/compare/4.1.2...4.2.0
 ### Changed
 - Add support PHP 8.4 & 8.5
 - Update dev dependencies
 - CI update & fixes
+
+## [4.1.2] - 2024-04-22
+[4.1.2]: https://github.com/php-mqdb/php-mqdb/compare/4.1.1...4.1.2
+### Changed
+- Force reconnection when handle auto-reconnection
 
 ## [4.1.1] - 2024-04-22
 [4.1.1]: https://github.com/php-mqdb/php-mqdb/compare/4.1.0...4.1.1
