@@ -28,7 +28,7 @@ class MessageFactory implements MessageFactoryInterface
      * @return MessageInterface
      * @throws \Exception
      */
-    public function create(\stdClass|null $data = null): MessageInterface
+    public function create(?\stdClass $data = null): MessageInterface
     {
         $contentType      = Enumerator\ContentType::TEXT;
         $contentTypeField = $this->tableConfig->getField('content_type');
@@ -42,7 +42,7 @@ class MessageFactory implements MessageFactoryInterface
             default => new Message(),
         };
 
-        if (!empty($data)) {
+        if ($data !== null) {
             $this->hydrateMessage($message, $data);
         }
 

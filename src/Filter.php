@@ -203,7 +203,7 @@ class Filter
      */
     public function setTopic(string $topic): self
     {
-        if (empty($topic)) {
+        if ($topic === '') {
             throw new \RuntimeException('Topic filter given cannot be empty!');
         }
 

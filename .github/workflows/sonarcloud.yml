@@ -1,0 +1,46 @@
+name: SonarQube
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  sonarcloud:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # To avoid "Shallow clone detected" error in SonarCloud report
+
+      #~ PHP Setup
+      - name: Setup PHP 8.3 # Minimum version
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+
+      #~ Composer Cache
+      - name: Get Composer Cache Directory
+        id: composer-cache
+        run: |
+          echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+      - uses: actions/cache@v3
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-composer-
+
+      - name: Install dependencies
+        if: steps.composer-cache.outputs.cache-hit != 'true'
+        run: make install
+
+      - name: Units Tests
+        run: make php/tests # To generate the coverage report
+
+      - name: SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@v7
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}

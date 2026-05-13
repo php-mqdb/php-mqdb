@@ -21,7 +21,7 @@ class MessageJson extends Message
      * @param bool $forceJsonEncode
      * @throws \Exception
      */
-    public function __construct(string $topic = null, mixed $content = null, bool $forceJsonEncode = true)
+    public function __construct(?string $topic = null, mixed $content = null, bool $forceJsonEncode = true)
     {
         $dateNow = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
         $this->setDateCreate($dateNow->format('Y-m-d H:i:s'));

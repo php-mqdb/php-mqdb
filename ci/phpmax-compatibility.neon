@@ -3,7 +3,7 @@ includes:
   - ./../vendor/phpstan/phpstan-phpunit/rules.neon
 
 parameters:
-  phpVersion: 80300
+  phpVersion: 80500
   level: 0
   paths:
     - ./../src

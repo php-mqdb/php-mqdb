@@ -94,9 +94,6 @@ trait MessageTrait
 
     /**
      * Set Message Identifier.
-     *
-     * @param  string $id
-     * @return static
      */
     public function setId(string $id): static
     {
@@ -113,8 +110,6 @@ trait MessageTrait
      *  2: pending ack (no response after a delay, can be deleted) ?
      *  3: ack received (treated, cannot be retreated)
      *
-     * @param  int $status
-     * @return static
      * @throws \UnderflowException
      */
     public function setStatus(int $status): static
@@ -137,8 +132,6 @@ trait MessageTrait
      *  4: Low
      *  5: Very Low
      *
-     * @param  int $priority
-     * @return static
      * @throws \UnderflowException
      */
     public function setPriority(int $priority): static
@@ -154,9 +147,6 @@ trait MessageTrait
 
     /**
      * Set message topic.
-     *
-     * @param  string $topic
-     * @return static
      */
     public function setTopic(string $topic): static
     {
@@ -167,9 +157,6 @@ trait MessageTrait
 
     /**
      * Set message content.
-     *
-     * @param  string $content
-     * @return static
      */
     public function setContent(string $content): static
     {
@@ -182,7 +169,6 @@ trait MessageTrait
      * Set message content type
      *
      * @param  string $contentType ('csv', 'json', 'xml', 'text'...)
-     * @return static
      */
     public function setContentType(string $contentType): static
     {
@@ -193,9 +179,6 @@ trait MessageTrait
 
     /**
      * Set Entity identifier linked to the message.
-     *
-     * @param  string|null $entityId
-     * @return static
      */
     public function setEntityId(?string $entityId): static
     {
@@ -206,9 +189,6 @@ trait MessageTrait
 
     /**
      * Set the expiration date of the message.
-     *
-     * @param  string|null $dateExpiration
-     * @return static
      */
     public function setDateExpiration(?string $dateExpiration): static
     {
@@ -219,9 +199,6 @@ trait MessageTrait
 
     /**
      * Set availability date of the message.
-     *
-     * @param  string|null $dateAvailability
-     * @return static
      */
     public function setDateAvailability(?string $dateAvailability): static
     {
@@ -232,9 +209,6 @@ trait MessageTrait
 
     /**
      * Set the creation date of the message.
-     *
-     * @param  string $dateCreate
-     * @return static
      */
     public function setDateCreate(string $dateCreate): static
     {
@@ -245,9 +219,6 @@ trait MessageTrait
 
     /**
      * Set the update date of the message.
-     *
-     * @param  string|null $dateUpdate
-     * @return static
      */
     public function setDateUpdate(?string $dateUpdate): static
     {

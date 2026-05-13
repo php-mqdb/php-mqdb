@@ -1,9 +1,13 @@
 includes:
   - ./vendor/phpstan/phpstan-phpunit/extension.neon
   - ./vendor/phpstan/phpstan-phpunit/rules.neon
+  - ./vendor/phpstan/phpstan-strict-rules/rules.neon # For next major release
+  - ./vendor/phpstan/phpstan-deprecation-rules/rules.neon
+  - phar://phpstan.phar/conf/bleedingEdge.neon
+  - ./ci/phpstan-baseline.neon
 
 parameters:
-  phpVersion: 80100
+  phpVersion: 80200
   level: max
   paths:
     - ./src
@@ -11,5 +15,7 @@ parameters:
 
   bootstrapFiles:
     - ./vendor/autoload.php
+
+  treatPhpDocTypesAsCertain: false
 
   ignoreErrors: []

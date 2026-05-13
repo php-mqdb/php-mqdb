@@ -17,7 +17,7 @@ final class TableConfig
 {
     private string $table = 'message_queue';
 
-    /** @var string[] $fields */
+    /** @var array<string, string> $fields */
     private array $fields = [
         'id'                => 'message_id',
         'status'            => 'message_status',
@@ -34,7 +34,7 @@ final class TableConfig
         'date_availability' => 'message_date_availability',
     ];
 
-    /** @var string[] $orders */
+    /** @var array<string, string> $orders */
     private array $orders = [
         'priority'          => 'ASC',
         'date_availability' => 'ASC',
@@ -48,7 +48,7 @@ final class TableConfig
      */
     public function setTable(string $table): self
     {
-        if (empty($table)) {
+        if ($table === '') {
             throw new PhpMqdbConfigurationException('Empty table name');
         }
 
@@ -62,7 +62,7 @@ final class TableConfig
     }
 
     /**
-     * @param string[] $fields
+     * @param array<string, string> $fields
      * @return TableConfig
      * @throws PhpMqdbConfigurationException
      */
@@ -82,7 +82,7 @@ final class TableConfig
     }
 
     /**
-     * @param string[] $fields
+     * @param array<string, string> $fields
      * @return TableConfig
      * @throws PhpMqdbConfigurationException
      */
@@ -137,7 +137,7 @@ final class TableConfig
     }
 
     /**
-     * @return string[]
+     * @return array<string, string>
      */
     public function getFields(): array
     {
@@ -145,7 +145,7 @@ final class TableConfig
     }
 
     /**
-     * @return string[]
+     * @return array<string, string>
      */
     public function getOrders(): array
     {
