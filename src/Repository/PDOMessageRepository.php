@@ -19,8 +19,8 @@ class PDOMessageRepository extends AbstractDatabaseMessageRepository
     private \PDO $connection;
 
     public function __construct(
-        \PDO|null $connection = null,
-        private readonly ConnectionFactory|null $connectionFactory = null,
+        ?\PDO $connection = null,
+        private readonly ?ConnectionFactory $connectionFactory = null,
         private readonly string $connectionName = '',
     ) {
         if ($this->connectionFactory instanceof ConnectionFactory) {

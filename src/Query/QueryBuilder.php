@@ -71,10 +71,10 @@ class QueryBuilder
             $notToUpdateFields[] = 'pending_id';
         }
 
-        $this->query =
-            'UPDATE ' . $this->tableConfig->getTable() . ' ' .
-            $this->buildQuerySet($message, $notToUpdateFields) .
-            ' WHERE ' . $this->tableConfig->getField('id') . ' = :existing_id';
+        $this->query
+            = 'UPDATE ' . $this->tableConfig->getTable() . ' '
+            . $this->buildQuerySet($message, $notToUpdateFields)
+            . ' WHERE ' . $this->tableConfig->getField('id') . ' = :existing_id';
 
         $this->bind[':existing_id'] = $message->getId();
 
@@ -87,9 +87,9 @@ class QueryBuilder
      * @return self
      * @throws PhpMqdbConfigurationException
      */
-    public function buildQueryGet(Filter $filter, string $pendingId = null): self
+    public function buildQueryGet(Filter $filter, ?string $pendingId = null): self
     {
-        if (empty($pendingId)) {
+        if ($pendingId === null || $pendingId === '') {
             $fields = $this->tableConfig->getField('id');
         } else {
             $fields = \implode(', ', \array_values($this->tableConfig->getFields()));
@@ -98,12 +98,12 @@ class QueryBuilder
         $order = $this->tableConfig->getOrders();
         $table = $this->tableConfig->getTable();
 
-        $this->query =
-            'SELECT ' . $fields .
-            '  FROM `' . $table . '` ' .
-            $this->buildWhere($filter, $pendingId) .
-            $this->buildOrder($order, $filter) .
-            $this->buildLimit($filter)
+        $this->query
+            = 'SELECT ' . $fields
+            . '  FROM `' . $table . '` '
+            . $this->buildWhere($filter, $pendingId)
+            . $this->buildOrder($order, $filter)
+            . $this->buildLimit($filter)
         ;
 
         return $this;
@@ -135,12 +135,12 @@ class QueryBuilder
             $status[':status_ackp'] = Enumerator\Status::ACK_PENDING;
         }
 
-        $this->query =
-            'DELETE FROM ' . $this->tableConfig->getTable() .
-            ' WHERE ' . $this->tableConfig->getField('status') . ' IN ( ' .
-            \implode(', ', \array_keys($status)) . ') AND ' .
-            $this->tableConfig->getField('date_update') . ' <= :date_update AND ' .
-            $this->tableConfig->getField('date_update') . ' IS NOT NULL';
+        $this->query
+            = 'DELETE FROM ' . $this->tableConfig->getTable()
+            . ' WHERE ' . $this->tableConfig->getField('status') . ' IN ( '
+            . \implode(', ', \array_keys($status)) . ') AND '
+            . $this->tableConfig->getField('date_update') . ' <= :date_update AND '
+            . $this->tableConfig->getField('date_update') . ' IS NOT NULL';
 
         $this->bind                 = $status;
         $this->bind[':date_update'] = $date;
@@ -155,12 +155,12 @@ class QueryBuilder
      */
     public function buildQueryCleanPending(string $date): self
     {
-        $this->query =
-            'UPDATE ' . $this->tableConfig->getTable() .
-            ' SET ' . $this->tableConfig->getField('status') . ' = :new_message_status WHERE ' .
-            $this->tableConfig->getField('status') . ' = :message_status AND ' .
-            $this->tableConfig->getField('date_update') . ' <= :date_update AND ' .
-            $this->tableConfig->getField('date_update') . ' IS NOT NULL';
+        $this->query
+            = 'UPDATE ' . $this->tableConfig->getTable()
+            . ' SET ' . $this->tableConfig->getField('status') . ' = :new_message_status WHERE '
+            . $this->tableConfig->getField('status') . ' = :message_status AND '
+            . $this->tableConfig->getField('date_update') . ' <= :date_update AND '
+            . $this->tableConfig->getField('date_update') . ' IS NOT NULL';
 
         $this->bind[':new_message_status'] = Enumerator\Status::ACK_NOT_RECEIVED;
         $this->bind[':message_status']     = Enumerator\Status::ACK_PENDING;
@@ -176,13 +176,13 @@ class QueryBuilder
      */
     public function buildQueryResetPending(string $date): self
     {
-        $this->query =
-            'UPDATE ' . $this->tableConfig->getTable() .
-            ' SET ' . $this->tableConfig->getField('status') . ' = :new_message_status, ' .
-            $this->tableConfig->getField('pending_id') . ' = NULL WHERE ' .
-            $this->tableConfig->getField('status') . ' = :message_status AND ' .
-            $this->tableConfig->getField('date_update') . ' <= :date_update AND ' .
-            $this->tableConfig->getField('date_update') . ' IS NOT NULL';
+        $this->query
+            = 'UPDATE ' . $this->tableConfig->getTable()
+            . ' SET ' . $this->tableConfig->getField('status') . ' = :new_message_status, '
+            . $this->tableConfig->getField('pending_id') . ' = NULL WHERE '
+            . $this->tableConfig->getField('status') . ' = :message_status AND '
+            . $this->tableConfig->getField('date_update') . ' <= :date_update AND '
+            . $this->tableConfig->getField('date_update') . ' IS NOT NULL';
 
         $this->bind[':new_message_status'] = Enumerator\Status::IN_QUEUE;
         $this->bind[':message_status']     = Enumerator\Status::ACK_PENDING;
@@ -211,12 +211,12 @@ class QueryBuilder
      */
     public function buildQueryCountExisting(Filter $filter): self
     {
-        $this->query =
-            'SELECT COUNT(' . $this->tableConfig->getField('id') . ')' .
-            ' FROM ' . $this->tableConfig->getTable() .
-            ' WHERE ' . $this->tableConfig->getField('status') . ' IN (:status_in_queue, :status_ackp)' .
-            ' AND ' . $this->tableConfig->getField('entity_id') . ' = :entity_id' .
-            ' AND ' . $this->tableConfig->getField('topic') . ' = :topic';
+        $this->query
+            = 'SELECT COUNT(' . $this->tableConfig->getField('id') . ')'
+            . ' FROM ' . $this->tableConfig->getTable()
+            . ' WHERE ' . $this->tableConfig->getField('status') . ' IN (:status_in_queue, :status_ackp)'
+            . ' AND ' . $this->tableConfig->getField('entity_id') . ' = :entity_id'
+            . ' AND ' . $this->tableConfig->getField('topic') . ' = :topic';
         $this->bind = [
             ':status_in_queue' => Enumerator\Status::IN_QUEUE,
             ':status_ackp' => Enumerator\Status::ACK_PENDING,
@@ -236,19 +236,19 @@ class QueryBuilder
      * @throws \Exception
      * @throws PhpMqdbConfigurationException
      */
-    public function buildQueryProtect(Filter $filter, string $pendingId = null): self
+    public function buildQueryProtect(Filter $filter, ?string $pendingId = null): self
     {
         $order = $this->tableConfig->getOrders();
         $table = $this->tableConfig->getTable();
 
-        $this->query =
-            'UPDATE `' . $table . '` SET ' .
-            $this->tableConfig->getField('status') . ' = :new_status, ' .
-            $this->tableConfig->getField('date_update') . ' = :new_date_update, ' .
-            $this->tableConfig->getField('pending_id') . ' = :new_pending_id ' .
-            $this->buildWhere($filter) .
-            $this->buildOrder($order, $filter) .
-            $this->buildLimit($filter)
+        $this->query
+            = 'UPDATE `' . $table . '` SET '
+            . $this->tableConfig->getField('status') . ' = :new_status, '
+            . $this->tableConfig->getField('date_update') . ' = :new_date_update, '
+            . $this->tableConfig->getField('pending_id') . ' = :new_pending_id '
+            . $this->buildWhere($filter)
+            . $this->buildOrder($order, $filter)
+            . $this->buildLimit($filter)
         ;
 
         $this->bind[':new_status']     = Enumerator\Status::ACK_PENDING;
@@ -271,11 +271,11 @@ class QueryBuilder
     public function buildQueryUpdate(string $id, int $status): self
     {
         $table = $this->tableConfig->getTable();
-        $this->query =
-            'UPDATE `' . $table . '` SET ' .
-            $this->tableConfig->getField('status') . ' = :new_status, ' .
-            $this->tableConfig->getField('date_update') . ' = :new_date_update, ' .
-            $this->tableConfig->getField('pending_id') . ' = :new_pending_id
+        $this->query
+            = 'UPDATE `' . $table . '` SET '
+            . $this->tableConfig->getField('status') . ' = :new_status, '
+            . $this->tableConfig->getField('date_update') . ' = :new_date_update, '
+            . $this->tableConfig->getField('pending_id') . ' = :new_pending_id
              WHERE ' . $this->tableConfig->getField('id') . ' = :id'
         ;
 
@@ -318,7 +318,7 @@ class QueryBuilder
      */
     private function addWhereIn(string $field, array $values): QueryBuilder
     {
-        if (empty($values)) {
+        if (count($values) === 0) {
             return $this;
         }
 
@@ -382,7 +382,7 @@ class QueryBuilder
                 continue;
             }
 
-            if (empty($value) && $value !== 0) { // int(0) should not be seen as empty
+            if ($value === null || $value === '') { // allow 0 a valid non-empty value
                 continue;
             }
 
@@ -395,7 +395,7 @@ class QueryBuilder
             $set[] = $this->tableConfig->getField('pending_id') . ' = NULL';
         }
 
-        if (empty($set)) {
+        if ($set === []) {
             throw new EmptySetValuesException('Cannot build SET query part! (no value to set)');
         }
 
@@ -410,10 +410,10 @@ class QueryBuilder
      * @return string
      * @throws PhpMqdbConfigurationException
      */
-    private function buildWhere(Filter $filter, string $pendingId = null): string
+    private function buildWhere(Filter $filter, ?string $pendingId = null): string
     {
         //~ If pending id is defined, select on pending id.
-        if (!empty($pendingId)) {
+        if ($pendingId !== null && $pendingId !== '') {
             $this->addWhere('pending_id', $pendingId);
 
             return ' WHERE ' . \implode(' AND ', $this->where);
@@ -421,7 +421,7 @@ class QueryBuilder
 
         $this->addWhere('pending_id', null);
 
-        if (!empty($filter->getTopic())) {
+        if ($filter->getTopic() !== '') {
             $topic = \strtr($filter->getTopic(), '*', '%');
             $sign  = \str_contains($topic, '%') ? 'LIKE' : '=';
             $this->addWhere('topic', $topic, $sign);
@@ -432,7 +432,7 @@ class QueryBuilder
 
         if ($this->tableConfig->hasField('date_availability')) {
             //~ If there is no date time availability set as filter, use current datetime.
-            if (!empty($filter->getDateTimeAvailability())) {
+            if ($filter->getDateTimeAvailability() !== null && $filter->getDateTimeAvailability() !== '') {
                 $this->addWhere('date_availability', $filter->getDateTimeAvailability(), '<=', true);
             } else {
                 $this->addWhere('date_availability', $filter->getDateTimeCurrent(), '<=', true);
@@ -441,7 +441,7 @@ class QueryBuilder
 
         if ($this->tableConfig->hasField('date_expiration')) {
             //~ If there is no date time expiration set as filter, use current datetime.
-            if (!empty($filter->getDateTimeExpiration())) {
+            if ($filter->getDateTimeExpiration() !== null && $filter->getDateTimeExpiration() !== '') {
                 $this->addWhere('date_expiration', $filter->getDateTimeExpiration(), '>', true);
             } else {
                 $this->addWhere('date_expiration', $filter->getDateTimeCurrent(), '>', true);
@@ -474,7 +474,7 @@ class QueryBuilder
      * @return string
      * @throws PhpMqdbConfigurationException
      */
-    private function buildOrder(array $order, Filter $filter = null): string
+    private function buildOrder(array $order, ?Filter $filter = null): string
     {
         $orderBy = [];
 
@@ -493,7 +493,7 @@ class QueryBuilder
             $orderBy[] = $field . ' ' . $direction;
         }
 
-        if (empty($orderBy)) {
+        if ($orderBy === []) {
             return '';
         }
 

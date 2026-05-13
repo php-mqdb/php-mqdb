@@ -19,10 +19,10 @@ trait ConfigTrait
     protected function getPDOConfig(): array
     {
         $driver   = 'mysql';
-        $host     = getenv('DB_HOST') ?: 'localhost';
-        $name     = getenv('DB_NAME') ?: 'mqserver';
-        $username = getenv('DB_USER') ?: 'user';
-        $password = getenv('DB_PASSWORD') ?: 'pass';
+        $host     = self::getEnv('DB_HOST', 'localhost');
+        $name     = self::getEnv('DB_NAME', 'mqserver');
+        $username = self::getEnv('DB_USER', 'user');
+        $password = self::getEnv('DB_PASSWORD', 'pass');
 
         return [
             'dsn'      => "$driver:dbname=$name;host=$host",
@@ -48,10 +48,10 @@ trait ConfigTrait
     protected function getDBALConfig(): array
     {
         $driver   = 'pdo_mysql';
-        $host     = getenv('DB_HOST') ?: 'localhost';
-        $name     = getenv('DB_NAME') ?: 'mqserver';
-        $username = getenv('DB_USER') ?: 'user';
-        $password = getenv('DB_PASSWORD') ?: 'pass';
+        $host     = self::getEnv('DB_HOST', 'localhost');
+        $name     = self::getEnv('DB_NAME', 'mqserver');
+        $username = self::getEnv('DB_USER', 'user');
+        $password = self::getEnv('DB_PASSWORD', 'pass');
 
         return [
             'driver'   => $driver,
@@ -60,5 +60,16 @@ trait ConfigTrait
             'password' => $password,
             'dbname'   => $name,
         ];
+    }
+
+    private static function getEnv(string $name, string $default): string
+    {
+        $value = getenv($name);
+
+        if (!is_string($value)) {
+            return $default;
+        }
+
+        return $value;
     }
 }

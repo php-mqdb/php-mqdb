@@ -1,6 +1,8 @@
-.PHONY: validate install update deps phpcs phpcbf php81compatibility php83compatibility phpstan analyze tests testdox ci clean
+.PHONY: validate install update php/deps php/check php/fix php/min-compatibility php/max-compatibility php/phpstan php/analyze php/tests php/test php/testdox ci clean
 
-PHP_FILES := $(shell find src tests -type f -name '*.php')
+PHP_MIN_VERSION := "8.1"
+PHP_MAX_VERSION := "8.5"
+COMPOSER_BIN := composer
 define header =
     @if [ -t 1 ]; then printf "\n\e[37m\e[100m  \e[104m $(1) \e[0m\n"; else printf "\n### $(1)\n"; fi
 endef
@@ -8,22 +10,21 @@ endef
 #~ Composer dependency
 validate:
 	$(call header,Composer Validation)
-	@composer validate
+	@${COMPOSER_BIN} validate
 
 install:
 	$(call header,Composer Install)
-	@composer install
+	@${COMPOSER_BIN} install
 
 update:
 	$(call header,Composer Update)
-	@composer update
-	@composer bump --dev-only
+	@${COMPOSER_BIN} update
+	@${COMPOSER_BIN} bump --dev-only
 
 composer.lock: install
 
 #~ Vendor binaries dependencies
-vendor/bin/phpcbf: composer.lock
-vendor/bin/phpcs: composer.lock
+vendor/bin/php-cs-fixer: composer.lock
 vendor/bin/phpstan: composer.lock
 vendor/bin/phpunit: composer.lock
 
@@ -31,55 +32,49 @@ vendor/bin/phpunit: composer.lock
 build/reports/phpunit:
 	@mkdir -p build/reports/phpunit
 
-build/reports/phpcs:
-	@mkdir -p build/reports/cs
-
 build/reports/phpstan:
 	@mkdir -p build/reports/phpstan
 
 #~ main commands
-deps: composer.json
+php/deps: composer.json
 	$(call header,Checking Dependencies)
-	@XDEBUG_MODE=off ./vendor/bin/composer-require-checker check --config-file=./ci/deps-config.json
+	@XDEBUG_MODE=off ./vendor/bin/composer-dependency-analyser --config ./ci/composer-dependency-analyser.php # for shadow, unused required dependencies and ext-* missing dependencies
 
-phpcs: vendor/bin/phpcs build/reports/phpcs
+php/check: vendor/bin/php-cs-fixer
 	$(call header,Checking Code Style)
-	@./vendor/bin/php-cs-fixer check -v --diff
-
-phpcbf: vendor/bin/phpcbf
+	@XDEBUG_MODE=off ./vendor/bin/php-cs-fixer check
+php/fix: vendor/bin/php-cs-fixer
 	$(call header,Fixing Code Style)
-	@./vendor/bin/php-cs-fixer fix -v
+	@XDEBUG_MODE=off ./vendor/bin/php-cs-fixer fix -v
 
-php81compatibility: vendor/bin/phpstan build/reports/phpstan
-	$(call header,Checking PHP 8.1 compatibility)
-	@XDEBUG_MODE=off ./vendor/bin/phpstan analyse --configuration=./ci/php81-compatibility.neon --error-format=table
+php/min-compatibility: vendor/bin/phpstan build/reports/phpstan
+	$(call header,Checking PHP ${PHP_MIN_VERSION} compatibility)
+	@XDEBUG_MODE=off ./vendor/bin/phpstan analyse --configuration=./ci/phpmin-compatibility.neon --error-format=table
 
-php83compatibility: vendor/bin/phpstan build/reports/phpstan
-	$(call header,Checking PHP 8.3 compatibility)
-	@XDEBUG_MODE=off ./vendor/bin/phpstan analyse --configuration=./ci/php83-compatibility.neon --error-format=table
+php/max-compatibility: vendor/bin/phpstan build/reports/phpstan #ci
+	$(call header,Checking PHP ${PHP_MAX_VERSION} compatibility)
+	@XDEBUG_MODE=off ./vendor/bin/phpstan analyse --configuration=./ci/phpmax-compatibility.neon --error-format=table
 
-phpstan: vendor/bin/phpstan build/reports/phpstan
-	$(call header,Running Static Analyze)
-	@XDEBUG_MODE=off ./vendor/bin/phpstan analyse --error-format=checkstyle > ./build/reports/phpstan/phpstan.xml
-
-analyze: vendor/bin/phpstan build/reports/phpstan
+php/analyze: vendor/bin/phpstan build/reports/phpstan #manual & ci
 	$(call header,Running Static Analyze - Pretty tty format)
 	@XDEBUG_MODE=off ./vendor/bin/phpstan analyse --error-format=table
 
-tests: vendor/bin/phpunit build/reports/phpunit #ci
+php/tests: vendor/bin/phpunit build/reports/phpunit #ci
 	$(call header,Running Unit Tests)
-	@XDEBUG_MODE=coverage php -dzend_extension=xdebug.so ./vendor/bin/phpunit --testsuite=unit --coverage-clover=./build/reports/phpunit/clover.xml --log-junit=./build/reports/phpunit/unit.xml --coverage-php=./build/reports/phpunit/unit.cov --coverage-html=./build/reports/coverage/ --fail-on-warning
+	@XDEBUG_MODE=coverage php ./vendor/bin/phpunit --testsuite=unit --coverage-clover=./build/reports/phpunit/clover.xml --log-junit=./build/reports/phpunit/unit.xml --coverage-php=./build/reports/phpunit/unit.cov --coverage-html=./build/reports/coverage/ --fail-on-warning
 
-integration: vendor/bin/phpunit build/reports/phpunit #manual
+php/test: php/tests
+
+php/integration: vendor/bin/phpunit build/reports/phpunit #manual
 	$(call header,Running Integration Tests)
-	@XDEBUG_MODE=coverage php -dzend_extension=xdebug.so ./vendor/bin/phpunit --testsuite=integration --fail-on-warning --testdox
+	@XDEBUG_MODE=coverage php ./vendor/bin/phpunit --testsuite=integration --fail-on-warning
 
-testdox: vendor/bin/phpunit #manual
+php/testdox: vendor/bin/phpunit #manual
 	$(call header,Running Unit Tests (Pretty format))
-	@XDEBUG_MODE=coverage php -dzend_extension=xdebug.so ./vendor/bin/phpunit --testsuite=unit --fail-on-warning --testdox
+	@XDEBUG_MODE=coverage php ./vendor/bin/phpunit --testsuite=unit --fail-on-warning --testdox
 
 clean:
-	$(call header,Cleaning previous build)
+	$(call header,Cleaning previous build) #manual
 	@if [ "$(shell ls -A ./build)" ]; then rm -rf ./build/*; fi; echo " done"
 
-ci: clean validate deps install phpcs tests integration php81compatibility php83compatibility analyze
+ci: clean validate install php/deps php/check php/tests php/integration php/min-compatibility php/max-compatibility php/analyze

@@ -18,5 +18,5 @@ interface MessageFactoryInterface
      * @return MessageInterface
      * @throws \Exception
      */
-    public function create(\stdClass|null $data = null): MessageInterface;
+    public function create(?\stdClass $data = null): MessageInterface;
 }

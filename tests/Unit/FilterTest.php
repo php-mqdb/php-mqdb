@@ -14,6 +14,7 @@ namespace PhpMqdb\Tests\Unit;
 use PhpMqdb\Enumerator\Priority;
 use PhpMqdb\Enumerator\Status;
 use PhpMqdb\Filter;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 class FilterTest extends TestCase
@@ -26,21 +27,13 @@ class FilterTest extends TestCase
         (new Filter())->setTopic('');
     }
 
-    /**
-     * @param string $topic
-     *
-     * @dataProvider validTopicsDataProvider
-     */
+    #[DataProvider('validTopicsDataProvider')]
     public function testValidTopic(string $topic): void
     {
-        self::assertEquals($topic, (new Filter())->setTopic($topic)->getTopic(), $topic);
+        self::assertSame($topic, (new Filter())->setTopic($topic)->getTopic(), $topic);
     }
 
-    /**
-     * @param string $topic
-     *
-     * @dataProvider invalidTopicsDataProvider
-     */
+    #[DataProvider('invalidTopicsDataProvider')]
     public function testInvalidTopicThatThrowAnException(string $topic): void
     {
         $this->expectException(\RuntimeException::class);
@@ -70,9 +63,9 @@ class FilterTest extends TestCase
     {
         $filter = new Filter();
 
-        self::assertEquals([Priority::VERY_LOW], $filter->setPriorities([Priority::VERY_LOW])->getPriorities());
-        self::assertEquals([Priority::MEDIUM], $filter->setPriorities([Priority::MEDIUM])->getPriorities());
-        self::assertEquals([Priority::VERY_HIGH], $filter->setPriorities([Priority::VERY_HIGH])->getPriorities());
+        self::assertSame([Priority::VERY_LOW], $filter->setPriorities([Priority::VERY_LOW])->getPriorities());
+        self::assertSame([Priority::MEDIUM], $filter->setPriorities([Priority::MEDIUM])->getPriorities());
+        self::assertSame([Priority::VERY_HIGH], $filter->setPriorities([Priority::VERY_HIGH])->getPriorities());
     }
 
     public function testStatusUnderflowException(): void
@@ -93,11 +86,11 @@ class FilterTest extends TestCase
     {
         $filter = new Filter();
 
-        self::assertEquals([Status::IN_QUEUE], $filter->setStatuses([Status::IN_QUEUE])->getStatuses());
-        self::assertEquals([Status::ACK_PENDING], $filter->setStatuses([Status::ACK_PENDING])->getStatuses());
-        self::assertEquals([Status::ACK_RECEIVED], $filter->setStatuses([Status::ACK_RECEIVED])->getStatuses());
-        self::assertEquals([Status::NACK_RECEIVED], $filter->setStatuses([Status::NACK_RECEIVED])->getStatuses());
-        self::assertEquals([Status::ACK_NOT_RECEIVED], $filter->setStatuses([Status::ACK_NOT_RECEIVED])->getStatuses());
+        self::assertSame([Status::IN_QUEUE], $filter->setStatuses([Status::IN_QUEUE])->getStatuses());
+        self::assertSame([Status::ACK_PENDING], $filter->setStatuses([Status::ACK_PENDING])->getStatuses());
+        self::assertSame([Status::ACK_RECEIVED], $filter->setStatuses([Status::ACK_RECEIVED])->getStatuses());
+        self::assertSame([Status::NACK_RECEIVED], $filter->setStatuses([Status::NACK_RECEIVED])->getStatuses());
+        self::assertSame([Status::ACK_NOT_RECEIVED], $filter->setStatuses([Status::ACK_NOT_RECEIVED])->getStatuses());
     }
 
     public function testOffsetUnderflowException(): void
@@ -114,9 +107,9 @@ class FilterTest extends TestCase
     {
         $filter = new Filter();
 
-        self::assertEquals(0, $filter->setOffset(0)->getOffset());
-        self::assertEquals(1000, $filter->setOffset(1000)->getOffset());
-        self::assertEquals(100000, $filter->setOffset(100000)->getOffset());
+        self::assertSame(0, $filter->setOffset(0)->getOffset());
+        self::assertSame(1000, $filter->setOffset(1000)->getOffset());
+        self::assertSame(100000, $filter->setOffset(100000)->getOffset());
     }
 
     /**
@@ -152,7 +145,7 @@ class FilterTest extends TestCase
         $tomorrow = (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->add(new \DateInterval('P1D'));
         $filter = (new Filter())->setDateTimeExpiration($tomorrow->format('Y-m-d H:i:s'));
 
-        self::assertEquals($tomorrow->format('Y-m-d H:i:s'), $filter->getDateTimeExpiration());
+        self::assertSame($tomorrow->format('Y-m-d H:i:s'), $filter->getDateTimeExpiration());
     }
 
     /**
@@ -174,7 +167,7 @@ class FilterTest extends TestCase
         $tomorrow = (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->add(new \DateInterval('P1D'));
         $filter = (new Filter())->setDateTimeAvailability($tomorrow->format('Y-m-d H:i:s'));
 
-        self::assertEquals($tomorrow->format('Y-m-d H:i:s'), $filter->getDateTimeAvailability());
+        self::assertSame($tomorrow->format('Y-m-d H:i:s'), $filter->getDateTimeAvailability());
     }
 
     public function testLimitUnderflowException(): void
@@ -195,17 +188,17 @@ class FilterTest extends TestCase
     {
         $filter = new Filter();
 
-        self::assertEquals(1, $filter->setLimit(1)->getLimit());
-        self::assertEquals(50, $filter->setLimit(50)->getLimit());
-        self::assertEquals(1000, $filter->setLimit(1000)->getLimit());
+        self::assertSame(1, $filter->setLimit(1)->getLimit());
+        self::assertSame(50, $filter->setLimit(50)->getLimit());
+        self::assertSame(1000, $filter->setLimit(1000)->getLimit());
     }
 
     public function testLimitAllowedValueWithIncreasedDefaultMaxLimit(): void
     {
         $filter = new Filter(10000);
 
-        self::assertEquals(5000, $filter->setLimit(5000)->getLimit());
-        self::assertEquals(10000, $filter->setLimit(10000)->getLimit());
+        self::assertSame(5000, $filter->setLimit(5000)->getLimit());
+        self::assertSame(10000, $filter->setLimit(10000)->getLimit());
     }
 
     public function testUnderflowMaxLimit(): void

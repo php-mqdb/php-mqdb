@@ -114,7 +114,7 @@ abstract class AbstractDatabaseMessageRepository implements MessageRepositoryInt
 
         $messages = $this->getMessages($filter);
 
-        if (empty($messages)) {
+        if ($messages === []) {
             return null;
         }
 
@@ -170,9 +170,6 @@ abstract class AbstractDatabaseMessageRepository implements MessageRepositoryInt
     /**
      * Publish message in queue.
      *
-     * @param MessageInterface $message
-     * @param bool $allowStatusUpdate Should status of messages be change on update or not (default false)
-     * @return MessageRepositoryInterface
      * @throws EmptySetValuesException
      * @throws PhpMqdbConfigurationException
      * @throws \Exception
@@ -182,7 +179,7 @@ abstract class AbstractDatabaseMessageRepository implements MessageRepositoryInt
         $queryBuilder = $this->getQueryBuilder();
 
         $isNew = false;
-        if (empty($message->getId())) {
+        if ($message->getId() === '') {
             $message->setId($this->generateId());
             $isNew = true;
         }
@@ -207,7 +204,7 @@ abstract class AbstractDatabaseMessageRepository implements MessageRepositoryInt
         Message\MessageInterface $message,
         ?callable $mergeCallback = null,
     ): MessageRepositoryInterface {
-        if (empty($message->getEntityId())) {
+        if ($message->getEntityId() === null || $message->getEntityId() === '') {
             throw new \LogicException("Can't use publishOrUpdateEntityMessage if there is not Entity in the message");
         }
 
@@ -239,7 +236,7 @@ abstract class AbstractDatabaseMessageRepository implements MessageRepositoryInt
      */
     public function publishOrSkipEntityMessage(Message\MessageInterface $message): MessageRepositoryInterface
     {
-        if (empty($message->getEntityId())) {
+        if ($message->getEntityId() === null || $message->getEntityId() === '') {
             throw new \LogicException("Can't use publishOrSkipEntityMessage if there is not Entity in the message");
         }
 
@@ -375,7 +372,7 @@ abstract class AbstractDatabaseMessageRepository implements MessageRepositoryInt
      * @return string
      * @throws \Exception
      */
-    private function getRelativeDate(\DateInterval $interval = null): string
+    private function getRelativeDate(?\DateInterval $interval = null): string
     {
         $date = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
 

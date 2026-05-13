@@ -40,12 +40,12 @@ class DBALMessageRepository extends AbstractDatabaseMessageRepository
 
         try {
             $result = $stmt->executeQuery();
-        } catch (DriverException | DeadlockException $exception) {
+        } catch (DriverException|DeadlockException $exception) {
             // Keep SQLState HY000 with ErrorCode 2006 (MySQL server has gone away)
             // And SQLState 40001 (Serialization failure: Deadlock found when trying to get lock)
             if (
-                !\in_array($exception->getCode(), [2006, 0], true) ||
-                !\in_array($exception->getSQLState(), ['HY000', '40001'], true)
+                !\in_array($exception->getCode(), [2006, 0], true)
+                || !\in_array($exception->getSQLState(), ['HY000', '40001'], true)
             ) {
                 throw $exception;
             }
@@ -70,7 +70,7 @@ class DBALMessageRepository extends AbstractDatabaseMessageRepository
     {
         foreach ($bind as $key => $value) {
             //~ Values are only int or string
-            $type = match(true) {
+            $type = match (true) {
                 is_int($value)  => ParameterType::INTEGER,
                 $value === null => ParameterType::NULL,
                 default         => ParameterType::STRING,
